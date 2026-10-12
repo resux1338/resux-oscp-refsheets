@@ -6,9 +6,9 @@ hashid '<HASH>'
 hash-identifier
 nth '<HASH>'
 ```
-NT hash from a known password (for Pass the Hash / ticketer / `-k`):
+NT hash from a known password (for Pass the Hash / ticketer / `-k`; `hashlib` md4 can be missing with OpenSSL 3):
 ```bash
-python3 -c 'import hashlib;print(hashlib.new("md4","<PW>".encode("utf-16le")).hexdigest())'
+python3 -c 'from impacket.ntlm import compute_nthash; print(compute_nthash("<PW>").hex())'
 ```
 - NT hash = "the NTLM hash": crack, or Pass the Hash on an NTLM service. NetNTLMv2 is crack-only, not passable.
 - Verify the mode against the hash format (`hashcat --example-hashes`) before a long run.

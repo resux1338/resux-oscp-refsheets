@@ -1,21 +1,19 @@
 # LDAP, hosts, and sessions
 
-[← Active Directory quick reference](../05-active-directory.md)
-
-Without AD module: query LDAP from domain DN with a narrow filter.
-
-Kali baseline with known account:
-
+## Kali baseline (known account)
 ```bash
-nxc smb <dc-ip> -u <user> -p '<password>' --shares --users --groups --pass-pol
-nxc smb <dc-ip> -u <user> -p '<password>' --rid-brute
-ldapdomaindump -u '<domain>\\<user>' -p '<password>' <dc-ip>
+nxc smb <DC-IP> -u <USER> -p '<PW>' --shares --users --groups --pass-pol
+nxc smb <DC-IP> -u <USER> -p '<PW>' --rid-brute
+ldapdomaindump -u '<DOMAIN>\\<USER>' -p '<PW>' <DC-IP>
 ```
+Anonymous RPC, then `enumdomusers`, `enumdomgroups`:
+```bash
+rpcclient -U '' -N <DC-IP>
+kerbrute userenum -d <DOMAIN.TLD> --dc <DC-IP> users.txt
+```
+- `kerbrute` is not in Kali's repos: download the release binary.
 
-Anonymous RPC: `rpcclient -U '' -N <dc-ip>` → `enumdomusers`, `enumdomgroups`. Scoped user check: `kerbrute userenum -d <domain.tld> --dc <dc-ip> users.txt`.
-
-## LDAP from PowerShell
-
+## LDAP from PowerShell (no AD module)
 ```powershell
 $PDC = [System.DirectoryServices.ActiveDirectory.Domain]::GetCurrentDomain().PdcRoleOwner.Name
 $DN = ([adsi]'').distinguishedName
@@ -25,11 +23,7 @@ $searcher = New-Object System.DirectoryServices.DirectorySearcher($entry)
 $searcher.Filter = "(samAccountType=805306368)"
 $searcher.FindAll()
 ```
-
-PDC discovery does not compare DC freshness. `CN=Users` limits search to that container.
-
-Reusable LDAP query:
-
+Reusable:
 ```powershell
 function LDAPSearch {
     param([string]$LDAPQuery)
@@ -42,32 +36,18 @@ function LDAPSearch {
 
 LDAPSearch -LDAPQuery "(objectClass=group)"
 ```
-
-Follow nested group DNs via `member`.
+- Narrow with a base such as `CN=Users,$DN`. Follow nested groups via `member`.
 
 ## Hosts and sessions
-
 ```powershell
 . .\PowerView.ps1
 Get-NetComputer | Select-Object dnshostname,operatingsystem,operatingsystemversion
 Get-NetUser | Select-Object samaccountname,description
 Find-LocalAdminAccess
+Get-NetSession -ComputerName <FQDN> -Verbose
 ```
-
-`Find-LocalAdminAccess` is domain-wide; use a smaller host set when needed.
-
-```powershell
-Get-NetSession -ComputerName <server-01> -Verbose
-```
-
 ```cmd
-PsLoggedon.exe \\<server-01>
+PsLoggedon.exe \\<FQDN>
 ```
-
-`Get-NetSession` = resource sessions; PsLoggedOn needs remote registry. Empty/access denied ≠ nobody logged on; your query may appear.
-
-## References
-
-- [DirectorySearcher.Filter](https://learn.microsoft.com/en-us/dotnet/api/system.directoryservices.directorysearcher.filter)
-- [NetSessionEnum](https://learn.microsoft.com/en-us/windows/win32/api/lmshare/nf-lmshare-netsessionenum)
-- [PsLoggedOn](https://learn.microsoft.com/en-us/sysinternals/downloads/psloggedon)
+- `Find-LocalAdminAccess` is domain-wide: pass a smaller host set when needed.
+- `Get-NetSession` = resource sessions; PsLoggedOn needs remote registry. Empty/denied ≠ nobody logged on (your own query may show).

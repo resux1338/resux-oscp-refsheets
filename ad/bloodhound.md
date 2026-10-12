@@ -1,40 +1,29 @@
 # BloodHound collection and path checks
 
-[← Active Directory quick reference](../05-active-directory.md)
-
-Collect for the path question; mark only controlled principals as owned.
+Collect for the path question; mark only principals you control as owned.
 
 ```cmd
-SharpHound.exe --Domain <domain.tld> --CollectionMethods Default --OutputDirectory C:\Users\<user>\Desktop
+SharpHound.exe --Domain <DOMAIN.TLD> --CollectionMethods Default --OutputDirectory C:\Users\<USER>\Desktop
 ```
-
 ```bash
-bloodhound-ce-python -u <username> -p '<password>' -d <domain.tld> -ns <dc-ip> -c Default --zip
+bloodhound-ce-python -u <USER> -p '<PW>' -d <DOMAIN.TLD> -ns <DC-IP> -c Default --zip
+nxc ldap <DC-IP> -u <USER> -p '<PW>' --bloodhound -c all --dns-server <DC-IP>
 ```
-
-NetExec collection (check CE/Legacy output format):
-
-```bash
-nxc ldap <dc-ip> -u <user> -p '<password>' --bloodhound -c all --dns-server <dc-ip>
-```
-
-Match collector to CE/Legacy. Collection errors can leave missing edges.
+- Match collector to BloodHound CE vs Legacy: `bloodhound-ce-python` / SharpHound CE for CE, `bloodhound-python` for ≤ 4.3. nxc `--bloodhound` defaults to CE.
+- Collection errors can leave missing edges. Re-collect after gaining a principal.
 
 ## Queries to adapt
-
-Cypher: replace `<DOMAIN>` with the suffix used in object names.
+Replace `<DOMAIN.TLD>` with the suffix used in object names (uppercase).
 
 ```cypher
 MATCH p=(n:User)-[:MemberOf*1..]->(m:Group)
-WHERE m.name = "DOMAIN ADMINS@<DOMAIN>"
+WHERE m.name = "DOMAIN ADMINS@<DOMAIN.TLD>"
 RETURN p
 ```
-
 ```cypher
 MATCH p=(m:User)-[:MemberOf*1..]->(n:Group)
-WHERE n.name = "DOMAIN ADMINS@<DOMAIN>"
+WHERE n.name = "DOMAIN ADMINS@<DOMAIN.TLD>"
 MATCH q=(m)<-[:HasSession]-(o:Computer)
 RETURN p, q
 ```
-
-Re-collect after gaining a principal. `GPLink` handling: [GPO edges](gpo-edges.md).
+- `GPLink` edges → [gpo-edges](gpo-edges.md).
