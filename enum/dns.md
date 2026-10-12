@@ -1,23 +1,22 @@
 # DNS records and zone transfers
 
-[← Service index](service-triage.md)
-
-Query the discovered DNS server/domain; retain names for vhosts, Kerberos, mail, TLS.
-
-```bash
-dig @<dns-ip> <domain.tld> SOA
-dig @<dns-ip> <domain.tld> NS
-dig @<dns-ip> <domain.tld> MX
-dig @<dns-ip> <domain.tld> TXT
-dig @<dns-ip> _ldap._tcp.dc._msdcs.<domain.tld> SRV
-dig @<dns-ip> -x <target-ip>
-```
-
-Zone transfer against authoritative server; if refused, query record types directly.
+## Record queries
+Keep names for vhosts, Kerberos, mail, TLS.
 
 ```bash
-dig @<dns-ip> <domain.tld> AXFR
-dnsrecon -d <domain.tld> -n <dns-ip> -t axfr
+dig @<IP> <DOMAIN.TLD> SOA
+dig @<IP> <DOMAIN.TLD> NS
+dig @<IP> <DOMAIN.TLD> MX
+dig @<IP> <DOMAIN.TLD> TXT
+dig @<IP> _ldap._tcp.dc._msdcs.<DOMAIN.TLD> SRV
+dig @<IP> -x <IP>
+nslookup -q=TXT <DOMAIN.TLD> <IP>
 ```
 
-Windows TXT: `nslookup -q=TXT <domain.tld> <dns-ip>`.
+## Zone transfer
+If refused, query record types directly.
+
+```bash
+dig @<IP> <DOMAIN.TLD> AXFR
+dnsrecon -d <DOMAIN.TLD> -n <IP> -t axfr
+```

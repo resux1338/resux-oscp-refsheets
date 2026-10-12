@@ -1,16 +1,10 @@
 # FTP
 
-[← Service index](service-triage.md)
-
-Banner → anonymous login → list/read permissions.
-
+## Anonymous login
 ```bash
-nmap -p21 -sV --script ftp-anon <target-ip>
-ftp <target-ip>
+nmap -p21 -sV --script ftp-anon <IP>
+ftp <IP>        # user: anonymous, pw: any email
 ```
-
-Interactive anonymous (`anonymous` + email password):
-
 ```text
 pwd
 ls -la
@@ -19,14 +13,10 @@ get notes.txt
 bye
 ```
 
-Curl anonymous listing/download:
-
+## curl
 ```bash
-curl -v 'ftp://<target-ip>/'
-curl --list-only 'ftp://<target-ip>/pub/'
-curl -o notes.txt 'ftp://<target-ip>/pub/notes.txt'
+curl -v 'ftp://<IP>/'
+curl --list-only 'ftp://<IP>/pub/'
+curl -o notes.txt 'ftp://<IP>/pub/notes.txt'
 ```
-
-`--list-only` may omit directories/hidden files. For upload, verify destination and what service consumes it.
-
-References: [Nmap `ftp-anon`](https://nmap.org/nsedoc/scripts/ftp-anon.html) · [curl FTP options](https://curl.se/docs/manpage.html).
+- `--list-only` may omit directories/hidden files.

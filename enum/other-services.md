@@ -1,44 +1,31 @@
 # SSH, Telnet, Finger, rsync, and TFTP
 
-[← Service index](service-triage.md)
-
-Check every identified service, including non-web ports.
-
 ## SSH: 22
-
 ```bash
-ssh-keyscan -T 5 <target-ip>
-ssh -v <user>@<target-ip>
+ssh-keyscan -T 5 <IP>
+ssh -v <USER>@<IP>
+chmod 600 <key-file>; ssh -i <key-file> <USER>@<IP>
 ```
-
-`ssh-keyscan` records advertised key only. Supplied key: `chmod 600 <key-file>; ssh -i <key-file> <user>@<target-ip>`.
 
 ## Telnet and Finger: 23, 79
-
 ```bash
-nc -nv <target-ip> 23
-finger @<target-ip>
-finger <user>@<target-ip>
+nc -nv <IP> 23
+finger @<IP>
+finger <USER>@<IP>
 ```
-
-Telnet is plaintext. Finger can disclose users/sessions; empty output is inconclusive.
+- Empty finger output is inconclusive.
 
 ## rsync daemon: 873
-
 ```bash
-rsync rsync://<target-ip>/
-rsync rsync://<target-ip>/<module>/
-rsync rsync://<target-ip>/<module>/<known-file> ./
+rsync rsync://<IP>/
+rsync rsync://<IP>/<MODULE>/
+rsync rsync://<IP>/<MODULE>/<FILE> ./
 ```
-
-Rsync: list modules → list selected module → copy file. Hidden/authenticated modules may not list; daemon transport is plaintext.
+- Hidden/authenticated modules may not list.
 
 ## TFTP: 69/UDP
-
-TFTP has no normal listing; request a known filename:
+No listing; request a known filename.
 
 ```bash
-curl -o <local-file> 'tftp://<target-ip>/<known-file>'
+curl -o <local-file> 'tftp://<IP>/<FILE>'
 ```
-
-References: [OpenSSH `ssh-keyscan`](https://man.openbsd.org/ssh-keyscan.1) · [rsync daemon syntax](https://download.samba.org/pub/rsync/rsync.1) · [curl TFTP](https://curl.se/docs/manpage.html).

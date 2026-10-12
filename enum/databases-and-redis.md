@@ -1,72 +1,58 @@
 # Databases and Redis
 
-[← Service index](service-triage.md) · [manual SQL injection](../web/manual-sqli.md)
-
-Connect, check current identity/rights, then accessible data.
+SQLi context: [web/manual-sqli.md](../web/manual-sqli.md)
 
 ## MySQL: 3306
-
 ```bash
-mysql -h <target-ip> -u <user> -p
+mysql -h <IP> -u <USER> -p
 ```
-
 ```sql
 SELECT USER(), CURRENT_USER(), @@version, @@secure_file_priv;
 SHOW GRANTS;
 SHOW DATABASES;
 ```
-
-MySQL: `USER()` = supplied login; `CURRENT_USER()` = privilege account. File access needs `FILE` and allowed `secure_file_priv`.
+- `USER()` = supplied login; `CURRENT_USER()` = privilege account.
+- File access needs `FILE` + permissive `secure_file_priv`.
 
 ## PostgreSQL: 5432
-
 ```bash
-psql -h <target-ip> -U <user> -d <database>
+psql -h <IP> -U <USER> -d <DATABASE>
 ```
-
 ```text
 \conninfo
 \l
 \du
 \dt
 ```
-
 ```sql
 SELECT current_user, version();
 ```
-
-PostgreSQL `\dt` covers current search path; check other schemas if blank.
+- `\dt` covers the current search path only; check other schemas.
 
 ## MSSQL: 1433
+Full workflow: [mssql.md](mssql.md). SQLi: [manual-sqli.md](../web/manual-sqli.md#mssql-string-context)
 
 ```bash
-impacket-mssqlclient '<user>:<password>@<target-ip>' -windows-auth
+impacket-mssqlclient '<USER>:<PW>@<IP>' -windows-auth
 ```
-
 ```sql
 SELECT SYSTEM_USER;
 SELECT DB_NAME();
 SELECT IS_SRVROLEMEMBER('sysadmin');
 EXEC sp_linkedservers;
 ```
-
-MSSQL: use `-windows-auth` only for Windows login. [MSSQL enumeration and access](mssql.md): SQL/Windows login, data, impersonation, linked servers, `xp_cmdshell`, and service-account follow-up. [SQLi context](../web/manual-sqli.md#mssql-string-context).
+- `-windows-auth` only for Windows logins.
 
 ## Redis: 6379
-
 ```bash
-redis-cli -h <target-ip> -p 6379
+redis-cli -h <IP> -p 6379
 ```
-
 ```text
 PING
 ACL WHOAMI
 INFO server
 SCAN 0
-TYPE <selected-key>
-GET <selected-string-key>
+TYPE <KEY>
+GET <KEY>
 ```
-
-Redis: continue `SCAN` to cursor `0`; check `TYPE` before `GET`; avoid `KEYS *` on large DB.
-
-References: [MySQL grants](https://dev.mysql.com/doc/refman/8.4/en/show-grants.html) · [PostgreSQL `psql`](https://www.postgresql.org/docs/current/app-psql.html) · [Redis `SCAN`](https://redis.io/docs/latest/commands/scan/).
+- Repeat `SCAN` until cursor `0`; `TYPE` before `GET`; avoid `KEYS *` on large DBs.

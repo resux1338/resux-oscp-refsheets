@@ -1,30 +1,21 @@
 # SNMP
 
-[← Service index](service-triage.md)
-
-Confirm UDP/161 + community before large walks. v1/v2c community is plaintext; v3 uses user/security settings.
-
-```bash
-onesixtyone -c <community-file> <target-ip>
-snmpget -v2c -c public <target-ip> 1.3.6.1.2.1.1.1.0
-snmpwalk -v2c -c public <target-ip> 1.3.6.1.2.1.1
-```
-
-Targeted OIDs: processes, software, Windows users, TCP ports:
+## Community + system info
+v1/v2c community is plaintext.
 
 ```bash
-snmpwalk -v2c -c public <target-ip> 1.3.6.1.2.1.25.4.2.1.2
-snmpwalk -v2c -c public <target-ip> 1.3.6.1.2.1.25.6.3.1.2
-snmpwalk -v2c -c public <target-ip> 1.3.6.1.4.1.77.1.2.25
-snmpwalk -v2c -c public <target-ip> 1.3.6.1.2.1.6.13.1.3
+onesixtyone -c <community-file> <IP>
+snmpget -v2c -c public <IP> 1.3.6.1.2.1.1.1.0
+snmpwalk -v2c -c public <IP> 1.3.6.1.2.1.1
 ```
 
-Net-SNMP extended commands:
-
+## Targeted OIDs
 ```bash
-snmpwalk -v2c -c public <target-ip> NET-SNMP-EXTEND-MIB::nsExtendObjects
+snmpwalk -v2c -c public <IP> 1.3.6.1.2.1.25.4.2.1.2    # processes
+snmpwalk -v2c -c public <IP> 1.3.6.1.2.1.25.6.3.1.2    # software
+snmpwalk -v2c -c public <IP> 1.3.6.1.4.1.77.1.2.25     # Windows users
+snmpwalk -v2c -c public <IP> 1.3.6.1.2.1.6.13.1.3      # TCP ports
+snmpwalk -v2c -c public <IP> NET-SNMP-EXTEND-MIB::nsExtendObjects
 ```
-
-Unknown MIB name: use numeric OID/check local MIBs. Timeout: filtering, wrong community, or wrong version.
-
-Reference: [Net-SNMP `snmpwalk`](https://www.net-snmp.org/docs/man/snmpwalk.html).
+- Unknown MIB name → use numeric OID.
+- Timeout → filtering, wrong community or version.

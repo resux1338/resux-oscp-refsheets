@@ -1,33 +1,23 @@
 # Remote login checks
 
-[← Recon quick reference](../01-recon.md)
-
-Match local/domain credential to open service; login success ≠ command execution.
-
 ## SSH
-
 ```bash
-ssh <user>@<target-ip>
-ssh -i <key-file> <user>@<target-ip>
+ssh <USER>@<IP>
+ssh -i <key-file> <USER>@<IP>
 ```
-
-SSH failure: check key mode, username, and accepted auth methods.
+- Fails → key mode (`chmod 600`), username, accepted auth methods.
 
 ## RDP
-
 ```bash
-nxc rdp <target-ip> -u <user> -p '<password>'
-xfreerdp /v:<target-ip> /u:<user> /p:'<password>' /cert:ignore +clipboard /dynamic-resolution
+nxc rdp <IP> -u <USER> -p '<PW>'
+xfreerdp3 /v:<IP> /u:<USER> /p:'<PW>' /cert:ignore +clipboard /dynamic-resolution
 ```
-
-RDP auth + black screen: check VPN route/MTU.
+- Black screen → VPN route/MTU.
 
 ## WinRM
-
 ```bash
-nxc winrm <target-ip> -u <user> -p '<password>'
-evil-winrm -i <target-ip> -u <user> -p '<password>'
-evil-winrm -i <target-ip> -u <user> -H <nt-hash>
+nxc winrm <IP> -u <USER> -p '<PW>'
+evil-winrm -i <IP> -u <USER> -p '<PW>'
+evil-winrm -i <IP> -u <USER> -H <NT>
 ```
-
-NT hash needs NTLM service; NetNTLMv2 differs: [hash notes](../passwords/hash-notes.md).
+- NT hash works (NTLM). NetNTLMv2 is crack-only: [hash notes](../passwords/hash-notes.md).
