@@ -1,18 +1,11 @@
 # Insecure deserialization
 
-[← Foothold quick reference](../02-foothold.md)
-
-Identify the serialized value, parser, and reachable class/gadget path.
-
-| Stack | Clue to check |
+| Stack | Clue |
 | --- | --- |
-| Java | Base64 beginning `rO0AB` or bytes beginning `ac ed 00 05`; identify the classes on the server. |
-| .NET | `__VIEWSTATE`, BinaryFormatter, LosFormatter, or Json.NET handling; check signing and the application's `machineKey` settings. |
-| PHP | `unserialize()` on input you control, with reachable `__wakeup()` or `__destruct()` methods. |
-| Python | `pickle.loads()` on input you control. |
+| Java | Base64 `rO0AB…` or bytes `ac ed 00 05` |
+| .NET | `__VIEWSTATE`, BinaryFormatter, LosFormatter, Json.NET; signing + `machineKey` |
+| PHP | `unserialize()` on your input + `__wakeup()` / `__destruct()` |
+| Python | `pickle.loads()` on your input |
 
-## ASP.NET ViewState
-
-A leaked `web.config` machine key can undermine ViewState protection. Check the application's signing settings and the actual server-side parser before claiming code execution.
-
-Compare baseline with one harmless change; parser errors alone do not prove execution.
+- ViewState: a leaked `web.config` machine key undermines protection.
+- Compare baseline vs one harmless change; parser errors ≠ execution.

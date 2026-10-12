@@ -1,13 +1,9 @@
 # GraphQL checks
 
-[← Foothold quick reference](../02-foothold.md)
-
-Check the GraphQL endpoint and introspection:
-
-## Schema check
+## Schema / introspection
 ```bash
-curl -s http://$IP/graphql -H 'Content-Type: application/json' \
+curl -s http://<IP>/graphql -H 'Content-Type: application/json' \
   -d '{"query":"{__schema{types{name fields{name}}}}"}'
 ```
-
-Query the same object as two users; schema visibility is not data access. Try `/graphiql` or `/v1/graphql` only when suggested by the app.
+- Query the same object as two users; schema visibility ≠ data access.
+- Try `/graphiql`, `/v1/graphql` if the app hints at them.

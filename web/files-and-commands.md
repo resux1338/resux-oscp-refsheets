@@ -1,18 +1,16 @@
 # File paths, uploads, and command input
 
-[← Foothold quick reference](../02-foothold.md)
-
-## Traversal and file inclusion
-
-[LFI and path traversal](lfi.md) · [RFI](rfi.md)
+LFI / traversal: [lfi.md](lfi.md) · [rfi.md](rfi.md)
 
 ## File upload
+Find the saved path/handler. Upload success ≠ execution; request the file with a harmless marker.
 
-Find saved path/handler; test `.phtml`, `.php5`, `.pHp`, double extensions. Image magic bytes: prefix with `GIF89a;`. Apache writable `.htaccess`: `AddType application/x-httpd-php .jpg`. Request saved file with a harmless marker; upload success ≠ execution.
+- Extensions: `.phtml`, `.php5`, `.pHp`, double extensions.
+- Magic bytes: prefix `GIF89a;`.
+- Writable Apache `.htaccess`: `AddType application/x-httpd-php .jpg`
 
 ## Command injection
-
-Compare a benign command with baseline:
+Compare each payload against a baseline:
 
 ```text
 ; id
@@ -21,5 +19,5 @@ Compare a benign command with baseline:
 $(id)
 ; sleep 5
 ```
-
-Blind: repeat `sleep 5` against a stable baseline or use a callback. Space filter: try `${IFS}` only in a shell context.
+- Blind: repeat `sleep 5` vs baseline, or callback.
+- Space filter: `${IFS}` (shell context only).

@@ -1,10 +1,6 @@
 # NoSQL injection checks
 
-[← Foothold quick reference](../02-foothold.md) · [Authentication and access control](authentication.md)
-
-## NoSQL operators
-
-If input is Mongo-backed, compare literal values with operators:
+Mongo-backed input: compare literals with operators. See also [authentication.md](authentication.md).
 
 ```text
 {"user":{"$ne":null},"pass":{"$ne":null}}

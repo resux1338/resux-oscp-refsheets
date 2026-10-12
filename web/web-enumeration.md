@@ -1,36 +1,30 @@
 # Web enumeration
 
-[← Recon quick reference](../01-recon.md)
+Use the discovered hostname for Host/SNI. Check source, JS, `robots.txt`, `sitemap.xml`, `.git/`, backups. Version clues: [fingerprinting.md](fingerprinting.md)
 
-Use discovered hostname for Host/SNI. Check source, JS, `robots.txt`, `sitemap.xml`, backups.
-
-For product and version clues, follow the [web fingerprinting workflow](fingerprinting.md).
-
+## Quick look
 ```bash
-whatweb http://<target-ip>
-curl -sI http://<target-ip>
+whatweb http://<IP>
+curl -sI http://<IP>
 ```
 
+## Content and parameters
 ```bash
-feroxbuster -u http://<target-ip> -w /usr/share/seclists/Discovery/Web-Content/raft-medium-directories.txt -x php,txt,html,bak,zip
-ffuf -u http://<target-ip>/FUZZ -w <wordlist> -e .php,.txt,.bak -mc all -fc 404
+feroxbuster -u http://<IP> -w /usr/share/seclists/Discovery/Web-Content/raft-medium-directories.txt -x php,txt,html,bak,zip
+ffuf -u http://<IP>/FUZZ -w <wordlist> -e .php,.txt,.bak -mc all -fc 404
 ```
-
-Measure baseline size before setting `-fs`:
-
-```bash
-ffuf -u http://<target-ip> -H 'Host: FUZZ.<domain.tld>' -w <subdomain-list> -fs <baseline-size>
-ffuf -u 'http://<target-ip>/page.php?FUZZ=test' -w <parameter-list> -fs <baseline-size>
-```
-
-For an identified CMS:
+Get the baseline size first, then `-fs`:
 
 ```bash
-wpscan --url http://<target> --enumerate u,vp,vt
-droopescan scan drupal -u http://<target>
-joomscan -u http://<target>
+ffuf -u http://<IP> -H 'Host: FUZZ.<DOMAIN.TLD>' -w <subdomain-list> -fs <baseline-size>
+ffuf -u 'http://<IP>/page.php?FUZZ=test' -w <parameter-list> -fs <baseline-size>
 ```
 
-Check `.git/`, backup extensions, and JS for endpoints/credentials. Confirm scanner hits manually.
-
-Keep a list of functions, parameters, and roles from real requests. Compare normal and changed responses; repeat path and function checks after login or a role change. [Input and access checks](../02-foothold.md).
+## CMS
+```bash
+wpscan --url http://<IP> --enumerate u,vp,vt
+droopescan scan drupal -u http://<IP>
+joomscan -u http://<IP>
+```
+- Confirm scanner hits manually.
+- Repeat path/function checks after login or role change. Input checks: [02-foothold.md](../02-foothold.md)
