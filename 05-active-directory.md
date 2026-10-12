@@ -2,31 +2,27 @@
 
 > Part of the **OSCP/OSCP+ cheatsheet** | [← back to index](README.md)
 
-Record domain, DC, credential; for each path, account + right + target + service.
-
-Start with the [Active Directory low-hanging-fruit enumeration](ad/active-directory-enum.md) page.
-
-From a Windows domain shell, use the [PowerView reference](ad/powerview.md) for scoped queries, useful fields, and older command aliases.
+Record domain, DC, credential; per path: account + right + target + service. Start: [AD enumeration](ad/active-directory-enum.md) · Windows shell: [PowerView](ad/powerview.md).
 
 | Possible path | Quick fit check | Details |
 | --- | --- | --- |
-| First domain picture | Can the account list users, groups, shares, hosts, and policy? | [LDAP and sessions](ad/ldap-and-sessions.md) · [BloodHound](ad/bloodhound.md) |
-| Roastable account | Is pre-auth disabled or is a user-backed SPN present? Check lockout before online tests. | [Authentication](ad/authentication.md) |
-| Useful object right | Identify the principal, exact ACL right, target, and original state. | [Object rights](ad/object-rights.md) · [SPNs and ACLs](ad/spn-acl-shares.md) |
-| Share or SYSVOL lead | Can you read credentials or write content a privileged process actually loads? | [Shares and SPNs](ad/spn-acl-shares.md) |
-| MSSQL access | Check SQL vs Windows login, effective role, impersonation, and linked-server mappings. | [MSSQL](enum/mssql.md) |
-| Session or admin edge | Does the account have local admin rights where a useful session or service exists? | [Sessions](ad/ldap-and-sessions.md#hosts-and-sessions) · [Lateral movement](ad/lateral-movement.md) |
-| GPO edge | Check the exact GPO right, linked scope, and affected host or user. | [GPOs](ad/gpo-edges.md) |
-| AD CS | Is an enrollment service present, and can this account enroll in a relevant template? | [AD CS](ad/adcs.md) |
-| Local admin or SYSTEM | Can you read local secrets through a confirmed right? | [Windows credential access](windows/credential-access.md) |
-| DC database or replication right | Can you read a DC database or replicate directory secrets? | [AD credential access](ad/credential-access.md) |
-| Ticket material | Match the key or ticket to its account, SPN, service, and domain. | [Tickets](ad/tickets.md) |
-| Delegation | Confirm direction, controlled service principal, allowed SPN/descriptor, and target-user restrictions. | [Delegation](ad/delegation.md) |
-| LAPS or gMSA | Separate reading/decrypting material from the managed account's actual host/service access. | [Managed credentials](ad/managed-credentials.md) |
-| Privileged group | Confirm DC/member-host scope, active token, exact operation, and restoration path. | [AD/DC groups](ad/privileged-groups.md) |
-| Live NTLM authentication | Check source policy, destination signing/binding, and the relayed account's rights. | [NTLM relay](ad/ntlm-relay.md) |
-| Kerberos fails | Check FQDN, DNS, clock skew, SPN, and the ticket cache. | [Kerberos checks](ad/kerberos-troubleshooting.md) |
-| Login but no execution | Check local admin rights and whether the matching remote service is open. | [Lateral movement](ad/lateral-movement.md) |
-| Advanced object path | Check prerequisite rights and DC support before changing an object. | [Advanced object paths](ad/object-rights.md#sealed-ldap-object-restore--newer-primitives) |
+| First domain picture | List users, groups, shares, hosts, policy | [LDAP and sessions](ad/ldap-and-sessions.md) · [BloodHound](ad/bloodhound.md) |
+| Roastable account | No pre-auth or user SPN; check lockout | [Authentication](ad/authentication.md) |
+| Useful object right | Principal, ACL right, target | [Object rights](ad/object-rights.md) · [SPNs and ACLs](ad/spn-acl-shares.md) |
+| Share or SYSVOL lead | Readable creds; writable loaded content | [Shares and SPNs](ad/spn-acl-shares.md) |
+| MSSQL access | SQL vs Windows login, role, impersonation, links | [MSSQL](enum/mssql.md) |
+| Session or admin edge | Local admin where a session exists? | [Sessions](ad/ldap-and-sessions.md#hosts-and-sessions) · [Lateral movement](ad/lateral-movement.md) |
+| GPO edge | GPO right, linked scope, affected hosts | [GPOs](ad/gpo-edges.md) |
+| AD CS | Enrollment service; enrollable template? | [AD CS](ad/adcs.md) |
+| Local admin or SYSTEM | Local secrets via a confirmed right | [Windows credential access](windows/credential-access.md) |
+| DC database or replication right | Read NTDS or replicate secrets? | [AD credential access](ad/credential-access.md) |
+| Ticket material | Match key/ticket to account, SPN, domain | [Tickets](ad/tickets.md) |
+| Delegation | Direction, controlled principal, allowed SPN | [Delegation](ad/delegation.md) |
+| LAPS or gMSA | Read right ≠ host/service access | [Managed credentials](ad/managed-credentials.md) |
+| Privileged group | DC/host scope, token, exact operation | [AD/DC groups](ad/privileged-groups.md) |
+| Live NTLM authentication | Source policy, destination signing, rights | [NTLM relay](ad/ntlm-relay.md) |
+| Kerberos fails | FQDN, DNS, clock, SPN, ticket cache | [Kerberos checks](ad/kerberos-troubleshooting.md) |
+| Login but no execution | Local admin; matching remote service open? | [Lateral movement](ad/lateral-movement.md) |
+| Advanced object path | Prerequisite rights, DC support | [Advanced object paths](ad/object-rights.md#sealed-ldap-object-restore--newer-primitives) |
 
 After new credentials, re-enumerate with that account. Confirm BloodHound rights on the target.
