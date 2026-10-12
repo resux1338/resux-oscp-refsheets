@@ -15,7 +15,8 @@ Command reference for OSCP+ and CPTS.
 [04 Windows](04-windows-privesc.md) ·
 [05 AD](05-active-directory.md) ·
 [06 Pivoting](06-pivoting.md) ·
-[07 Passwords](07-password-attacks.md)
+[07 Passwords](07-password-attacks.md) ·
+[Documentation](documentation/exam-checklist.md)
 
 </div>
 
@@ -29,6 +30,7 @@ enumerate → lead → prove preconditions → access → re-enumerate
 - `windows shell` → [Windows first pass](windows/enumeration.md)
 - `domain creds` → [AD baseline](ad/active-directory-enum.md)
 - `no progress` → [Methodology and stuck checklist](00-methodology.md)
+- `proof / report` → [Exam documentation checklist](documentation/exam-checklist.md)
 
 ## [01 · Recon](01-recon.md)
 
@@ -85,15 +87,20 @@ enumerate → lead → prove preconditions → access → re-enumerate
 - `offline` [Hash ID, NT vs NetNTLMv2](passwords/cracking.md#identify-the-hash) · [hashcat, john, *2john, shadow, rules](passwords/cracking.md)
 - `online` [Spraying, brute force](passwords/online-logins.md)
 
+## [Documentation](documentation/exam-checklist.md)
+
+- `proof` [Proof screenshots, report content, submission](documentation/exam-checklist.md)
+- `setup` [Screenshot hotkey, folders, terminal logging](documentation/screenshots-and-logging.md)
+
 ---
 
-[`scripts/`](scripts/README.md): executable-reference finder (PowerShell), VBA payload chunker. [`REFERENCES.md`](REFERENCES.md): external links by topic.
+[`scripts/`](scripts/README.md): executable-reference finder (PowerShell), VBA payload chunker, screenshot hotkey (`shot.sh`). [`REFERENCES.md`](REFERENCES.md): external links by topic.
 
 ```text
 <IP> target   <KALI> tun0   <SUBNET>   <PORT>
 <DOMAIN> NetBIOS   <DOMAIN.TLD>   <DC-IP>   <DC-FQDN>   <FQDN> non-DC host
 <USER>   <PW>   <NT>   <HOSTNAME>   <COMPUTER>   <TARGET>   <SERVICE>   <SVC>   <GMSA>   <GROUP>   <SHARE>
-<IMPERSONATE>   <LOCAL-USER>   <AES256-KEY>   <PFX>   <CA-FQDN>   <DLL-PATH>   <CONSOLE-PORT>   <SOURCE-IP>
+<SET>   <OCTET>   <OSID>   <PATH>   <IMPERSONATE>   <LOCAL-USER>   <AES256-KEY>   <PFX>   <CA-FQDN>   <DLL-PATH>   <CONSOLE-PORT>   <SOURCE-IP>
 ```
 
 > [!IMPORTANT]

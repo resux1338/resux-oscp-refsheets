@@ -3,7 +3,7 @@
 !/scripts/README.md
 !/scripts/Find-ExecutableReferences.ps1
 !/scripts/vba_chunks.py
-
+!/scripts/shot.sh
 # Verification for the unpublished tools stays local too.
 /tests/
 __pycache__/

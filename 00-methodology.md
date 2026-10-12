@@ -52,4 +52,5 @@
 - [ ] New interface/route? What changed since last enum?
 
 ## Notes
+- Proof and report rules: [Exam documentation](documentation/exam-checklist.md). Screenshot hotkey and logging: [setup](documentation/screenshots-and-logging.md).
 - Keep hosts/ports, versions, URLs, creds with scope/source, decisive commands, failed checks, shells, routes, `principal → right → target`.
