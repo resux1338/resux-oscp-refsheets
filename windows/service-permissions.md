@@ -20,7 +20,7 @@ sc.exe stop <SERVICE>
 sc.exe start <SERVICE>
 ```
 - Keep the space after `binPath=`.
-- Command line with embedded quotes: native `sc.exe` quoting breaks in PowerShell → [CIM workflow](../ad/privileged-groups.md#server-operators-exact-service-rights-benign-execution-proof).
+- Command line with embedded quotes: native `sc.exe` quoting breaks in PowerShell → [CIM workflow](../ad/privileged-groups.md#server-operators).
 - Non-service exe still runs its side effect, then the SCM reports a startup error.
 
 Restore the original command line:

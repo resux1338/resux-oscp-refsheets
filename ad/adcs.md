@@ -37,7 +37,7 @@ certipy template -u <USER>@<DOMAIN.TLD> -p '<PW>' -dc-ip <DC-IP> \
 - Re-enumerate afterwards; don't overwrite concurrent edits.
 
 ## ESC8
-Live relay to the enrollment endpoint → [ntlm-relay](ntlm-relay.md#ad-cs-relay-esc8-follow-through). A captured NetNTLM file is not enough.
+Live relay to the enrollment endpoint → [ntlm-relay](ntlm-relay.md#ad-cs-relay-esc8). A captured NetNTLM file is not enough.
 
 ## PKINIT and Schannel failures
 `KDC_ERR_PADATA_TYPE_NOSUPP` → DC PKINIT support / certificate config. Schannel / LDAP instead:

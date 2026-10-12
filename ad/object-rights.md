@@ -15,7 +15,7 @@ Set-DomainUserPassword -Identity <TARGET-USER> -AccountPassword (ConvertTo-Secur
 net group "<TARGET-GROUP>" <USER> /add /domain
 ```
 - A reset doesn't show the old password and can break encrypted user data and running services.
-- Membership: save the original members; remove only what you added → [privileged-groups](privileged-groups.md#account-operators-verify-a-useful-nonprotected-target).
+- Membership: save the original members; remove only what you added → [privileged-groups](privileged-groups.md#account-operators).
 
 ## Targeted Kerberoast (SPN write)
 AD module, SPN-write confirmed. Add one SPN, never replace the set:

