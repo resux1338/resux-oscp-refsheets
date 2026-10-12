@@ -37,8 +37,8 @@
 - [Client code](https://github.com/umbraco/Umbraco-CMS/blob/release-10.3.2/src/Umbraco.Web.UI.Client/src/app.js#L45-L59)
 - [Umbraco bundling documentation](https://docs.umbraco.com/umbraco-cms/13.latest/fundamentals/design/stylesheets-javascript)
 - [Umbraco 14 upgrade note](https://docs.umbraco.com/umbraco-cloud/optimize-and-maintain-your-site/manage-product-upgrades/product-upgrades/major-upgrades)
-- [Server-variable construction](https://github.com/umbraco/Umbraco-CMS/blob/release-10.3.2/src/Umbraco.Web.BackOffice/Controllers/BackOfficeServerVariables.cs#L651-L667)
-- [Hash implementation](https://github.com/umbraco/Umbraco-CMS/blob/release-10.3.2/src/Umbraco.Core/Extensions/StringExtensions.cs#L602-L623)
+- [Server-variable construction](https://github.com/umbraco/Umbraco-CMS/blob/release-10.3.2/src/Umbraco.Web.BackOffice/Controllers/BackOfficeServerVariables.cs#L688)
+- [Hash implementation](https://github.com/umbraco/Umbraco-CMS/blob/release-10.3.2/src/Umbraco.Core/Extensions/StringExtensions.cs#L659)
 - [Umbraco 10 server variables](https://github.com/umbraco/Umbraco-CMS/blob/release-10.3.2/src/Umbraco.Web.BackOffice/Controllers/BackOfficeServerVariables.cs#L224-L229)
 - [PortSwigger traversal](https://portswigger.net/web-security/file-path-traversal)
 - [OWASP file inclusion](https://wstg.owasp.org/latest/4-Web_Application_Security_Testing/07-Input_Validation_Testing/11.1-Testing_for_File_Inclusion/)
@@ -55,6 +55,8 @@
 - [Powercat](https://github.com/besimorhino/powercat)
 - [Swaks reference](https://www.jetmore.org/john/code/swaks/files/swaks-20240103.0/doc/ref.txt)
 - [WsgiDAV](https://github.com/mar10/wsgidav)
+- [ConPtyShell](https://github.com/antonioCoco/ConPtyShell)
+- [revshells.com](https://www.revshells.com/) (reverse shell generator)
 
 ## Linux privilege escalation
 

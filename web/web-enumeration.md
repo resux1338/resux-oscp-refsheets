@@ -26,5 +26,6 @@ wpscan --url http://<IP> --enumerate u,vp,vt
 droopescan scan drupal -u http://<IP>
 joomscan -u http://<IP>
 ```
+- `vp`/`vt` vuln data only with `--api-token <TOKEN>` (free wpscan.com account).
 - Confirm scanner hits manually.
 - Repeat path/function checks after login or role change. Input checks: [02-foothold.md](../02-foothold.md)

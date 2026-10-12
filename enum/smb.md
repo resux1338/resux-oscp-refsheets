@@ -6,7 +6,8 @@ smbclient -L //<IP>/ -U '' -N
 nxc smb <IP> -u '' -p '' --shares
 nxc smb <IP> -u 'guest' -p '' --shares
 enum4linux-ng -A <IP>
-smbmap -H <IP> -u null
+smbmap -H <IP>                # null session (no -u)
+smbmap -H <IP> -u null        # bogus user → guest, if enabled
 ```
 
 ## Open a share

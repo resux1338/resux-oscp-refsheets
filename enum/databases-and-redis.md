@@ -30,7 +30,7 @@ SELECT current_user, version();
 - `\dt` covers the current search path only; check other schemas.
 
 ## MSSQL: 1433
-Full workflow: [mssql.md](mssql.md). SQLi: [manual-sqli.md](../web/manual-sqli.md#mssql-string-context)
+Full workflow: [mssql.md](mssql.md). SQLi: [manual-sqli.md](../web/manual-sqli.md#mssql)
 
 ```bash
 impacket-mssqlclient '<USER>:<PW>@<IP>' -windows-auth
