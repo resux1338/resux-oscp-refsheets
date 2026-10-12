@@ -20,4 +20,4 @@ nxc winrm <IP> -u <USER> -p '<PW>'
 evil-winrm -i <IP> -u <USER> -p '<PW>'
 evil-winrm -i <IP> -u <USER> -H <NT>
 ```
-- NT hash works (NTLM). NetNTLMv2 is crack-only: [hash notes](../passwords/hash-notes.md).
+- NT hash works (NTLM). NetNTLMv2 is crack-only: [cracking](../passwords/cracking.md#identify-the-hash).
