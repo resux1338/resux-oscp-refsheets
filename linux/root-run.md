@@ -1,10 +1,7 @@
 # Root-run files and services
 
-[← Linux quick reference](../03-linux-privesc.md) · [Sudo](sudo.md) · [SUID and capabilities](suid-and-capabilities.md)
-
-Find root-run command/file you control; confirm arguments and trigger.
-
 ## Find the path
+Find a root-run command/file you control; confirm its arguments and trigger.
 
 ```bash
 ps -eo user,pid,ppid,cmd --forest
@@ -13,43 +10,40 @@ stat -Lc '%A %a %U:%G %n' /path/to/root-run-script
 namei -l /path/to/root-run-script
 getfacl -p /path/to/root-run-script /path/to/parent-directory
 ```
+- Group/ACL access counts, not only world-writable bits. Writing a file ≠ replacing a directory entry.
 
-Scheduled task: inspect the full command/script, run-as identity, dependencies, environment, and actual trigger. Group/ACL access matters as well as world-writable mode bits. File write permission and permission to replace a directory entry are different checks. [Linux ACL semantics](https://man7.org/linux/man-pages/man5/acl.5.html).
-
+## Cron / timers / services
 ```bash
 cat /etc/crontab
 ls -lah /etc/cron.* /var/spool/cron 2>/dev/null
 systemctl list-timers --all
-systemctl cat <service>
-systemctl show <service> -p User -p Group -p ExecStart -p Environment \
+systemctl cat <SERVICE>
+systemctl show <SERVICE> -p User -p Group -p ExecStart -p Environment \
   -p EnvironmentFiles -p WorkingDirectory -p FragmentPath -p DropInPaths
 ```
+- Your PATH ≠ the job's PATH: read cron `PATH=` lines and unit/drop-ins.
+- systemd `ExecStart` has no shell: pipes/redirects/globs need `sh -c`.
 
-Check relative commands, writable paths, wildcards, preserved environment:
-
+## Relative commands, writable dirs, wildcards
 ```bash
 printf '%s\n' "$PATH"
 find / -xdev -type d -writable -ls 2>/dev/null
 rg '\*' /etc/cron.* /etc/systemd/system /usr/lib/systemd/system 2>/dev/null
 ```
+- No `rg`: use `grep -R '\*' ...`.
 
-Your interactive PATH does not establish the job's PATH. Read cron environment assignments and systemd units/drop-ins. Systemd command directives normally execute programs without a shell, so pipes, redirection, and globs require an actual shell/interpreter in the command. Inspect `EnvironmentFile` and `WorkingDirectory` along with the executable. [systemd execution](https://github.com/systemd/systemd/blob/main/man/systemd.exec.xml), [service command semantics](https://github.com/systemd/systemd/blob/main/man/systemd.service.xml).
-
-If `rg` is unavailable, use the installed text-search tool. A wildcard or relative command is a lead only after the privileged command's arguments, working directory, and search path are established.
-
-## Follow the dependency the privileged process actually consumes
-
-| Lead | Confirm before changing anything |
+## Dependency the privileged process consumes
+| Lead | Confirm |
 | --- | --- |
-| Writable script | It is invoked by the privileged caller, with the expected interpreter and arguments |
-| Relative helper command | The caller's search path reaches your directory before a legitimate helper |
-| Python import | Exact module/API and effective import order; see [sudo module proof](sudo.md#workflow-2-fixed-python-script-with-controllable-module-search) |
-| Writable configuration | The caller loads it, what the field controls, and when changes take effect |
-| Wildcard arguments | Exact expansion directory and option handling; filenames are not always parsed as command options |
-| Writable shared library | Selected dependency and search order, loader restrictions, and a reproducible load trigger |
+| Writable script | Privileged caller runs it, with which interpreter/args |
+| Relative helper command | Caller's PATH reaches your directory first |
+| Python import | Module name + import order → [sudo: PYTHONPATH](sudo.md#python-script-with-setenv-pythonpath) |
+| Writable config | Caller loads it; when changes apply |
+| Wildcard arguments | Expansion directory; filenames aren't always parsed as options |
+| Writable shared library | Which library is loaded, search order, trigger |
 
-Use `pspy` to correlate short-lived processes and schedules. Read arguments and timestamps; observing a process name alone does not establish which writable component it consumes. [pspy](https://github.com/DominicBreuker/pspy).
-
-## Before modifying a root-run file
-
-Save original bytes, owner/group, mode, ACLs, relevant xattrs, and trigger state. Choose a benign identity/file proof and a single controlled run. Restore the introduced changes before another run consumes them, verify the original metadata, and remove only your proof artifacts. Use [privileged file-write checks](file-write.md) when the primitive writes to a chosen destination.
+```bash
+./pspy64
+```
+- pspy: read arguments and timestamps to see what a job really consumes.
+- Restoring: if you edit a root-run file, put back original contents + mode before the next run, only if leaving it would break the box.

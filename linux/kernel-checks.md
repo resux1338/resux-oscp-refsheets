@@ -1,8 +1,7 @@
 # Kernel and container checks
 
-[← Linux quick reference](../03-linux-privesc.md)
-
-After sudo/files/groups/shares: check exact kernel package, not just version string (backports).
+## Kernel / package version
+Use after sudo/files/groups/shares are exhausted.
 
 ```bash
 uname -a
@@ -12,7 +11,9 @@ dpkg-query -W 2>/dev/null
 rpm -qa 2>/dev/null
 sudo -V | head -1
 ```
+- Match exact package build, config, architecture and patches, not only the version string (backports).
 
+## Capabilities / container
 ```bash
 getcap -r / 2>/dev/null
 getpcaps $$ 2>/dev/null
@@ -21,5 +22,4 @@ cat /proc/1/cgroup
 test -f /.dockerenv && echo docker
 ls -lah /var/run/docker.sock /run/containerd/containerd.sock 2>/dev/null
 ```
-
-Match package build, config, architecture, and patches. Container root ≠ host root.
+- Container root ≠ host root.

