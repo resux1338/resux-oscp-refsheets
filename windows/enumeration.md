@@ -1,11 +1,6 @@
 # Windows host enumeration
 
-[← index](../README.md) · [Windows privilege escalation](../04-windows-privesc.md)
-
-Catch the low-hanging fruit before choosing a privilege-escalation path. Record the current identity, token, host build, architecture, local listeners, privileged processes, writable target, and trigger.
-
 ## First pass
-
 ```powershell
 whoami
 whoami /all
@@ -15,8 +10,7 @@ ipconfig /all
 route print
 netstat -ano
 ```
-
-An Administrators-group SID in the token does not necessarily mean the current process is elevated. Record the integrity level and whether important privileges are enabled.
+- Administrators SID in the token ≠ elevated: check integrity level and which privileges are enabled.
 
 ```powershell
 $PSVersionTable
@@ -25,11 +19,9 @@ Get-CimInstance Win32_OperatingSystem |
 Get-HotFix | Sort-Object InstalledOn -Descending | Select-Object -First 20
 Get-MpComputerStatus
 ```
+- Cmdlet missing → `systeminfo` or the native command. WMIC is removed on current Windows.
 
-When a cmdlet is unavailable, use `systeminfo` or the matching native command. WMIC is a legacy fallback only where it is installed; current Windows releases may remove it. [Microsoft WMIC removal guidance](https://support.microsoft.com/en-us/servicing/os/windows/docs/2025/09/windows-management-instrumentation-command-line-wmic-removal-from-windows).
-
-## Users, groups, and sessions
-
+## Users, groups, sessions
 ```cmd
 net user
 net localgroup
@@ -38,18 +30,16 @@ qwinsta
 query user
 cmdkey /list
 ```
-
 ```powershell
 Get-LocalUser
 Get-LocalGroup
 Get-LocalGroupMember -Group '<LOCAL-ADMIN-GROUP>'
 Get-CimInstance Win32_LoggedOnUser
 ```
+- Non-English host: use the localized Administrators group name.
+- Token rights → [token-groups](token-groups.md). Domain/DC groups → [ad/privileged-groups](../ad/privileged-groups.md).
 
-Use the localized administrator-group name when the host is not English. Check [local token rights](token-groups.md); domain/DC group routes have their own [scope and operation checks](../ad/privileged-groups.md).
-
-## Processes, software, and local services
-
+## Processes, software, local services
 ```powershell
 Get-Process
 tasklist /svc
@@ -57,20 +47,15 @@ Get-NetTCPConnection -State Listen | Sort-Object LocalPort
 Get-CimInstance Win32_Service |
     Select-Object Name,State,StartMode,StartName,PathName
 ```
-
 ```powershell
 Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*',
                  'HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*' |
     Where-Object DisplayName |
     Select-Object DisplayName,DisplayVersion,Publisher,InstallLocation
 ```
-
-Compare a local-only listener with its owning process and account. Forward only the service you intend to inspect; see [pivoting and tunneling](../06-pivoting.md).
+- Local-only listener: match owning process and account, then [forward it](../06-pivoting.md).
 
 ## Services and file permissions
-
-An unusual service is only a lead. Record its account, exact executable and arguments, file ACL, service ACL, current state, and a legitimate start or restart trigger.
-
 ```powershell
 Get-CimInstance Win32_Service |
     Where-Object { $_.PathName -and $_.PathName -notmatch '^"?C:\\Windows\\' } |
@@ -78,34 +63,28 @@ Get-CimInstance Win32_Service |
 
 sc.exe qc <SERVICE>
 sc.exe sdshow <SERVICE>
-icacls '<EXECUTABLE-OR-DIRECTORY-PATH>'
-Get-Acl '<EXECUTABLE-OR-DIRECTORY-PATH>' | Format-List
+icacls '<PATH>'
+Get-Acl '<PATH>' | Format-List
 ```
+- Unquoted path: needs spaces + a writable candidate prefix → [unquoted-service-paths](unquoted-service-paths.md).
+- Writable binary: needs a stronger service account + a trigger → [service-binary-hijacking](service-binary-hijacking.md).
+- Service ACL → [service-permissions](service-permissions.md).
 
-An unquoted path needs spaces and a writable candidate prefix. A writable binary still needs a more-privileged service account and a trigger. Follow the matching [service binary](service-binary-hijacking.md), [service permission](service-permissions.md), or [unquoted path](unquoted-service-paths.md) checks.
-
-## Scheduled tasks, autoruns, and installer policy
-
+## Scheduled tasks, autoruns, installer policy
 ```powershell
 schtasks /query /fo LIST /v
 Get-ScheduledTask | Select-Object TaskPath,TaskName,State,Principal,Actions
 Get-ItemProperty 'HKLM:\Software\Microsoft\Windows\CurrentVersion\Run*',
                  'HKCU:\Software\Microsoft\Windows\CurrentVersion\Run*' -ErrorAction SilentlyContinue
 ```
-
-For an interesting task or autorun, inspect the referenced file and parent-directory ACLs. Record the run-as account and trigger.
-
 ```cmd
 reg query HKCU\Software\Policies\Microsoft\Windows\Installer /v AlwaysInstallElevated
 reg query HKLM\Software\Policies\Microsoft\Windows\Installer /v AlwaysInstallElevated
 ```
-
-Both installer-policy values must be enabled before this is a valid lead. Follow [tasks and autoruns](scheduled-tasks-and-autoruns.md) for principal/action/trigger checks and [installer policy](services.md#installer-policy) for the installer route.
+- `AlwaysInstallElevated`: both values must be 1 → [services](services.md#installer-policy).
+- Task/autorun: check referenced file + parent-directory ACLs, run-as account, trigger → [scheduled-tasks-and-autoruns](scheduled-tasks-and-autoruns.md).
 
 ## Targeted credential checks
-
-Start with known application locations and user-controlled history instead of searching the entire drive.
-
 ```powershell
 (Get-PSReadLineOption).HistorySavePath
 Get-History
@@ -122,17 +101,13 @@ Get-ChildItem -Path $SearchRoots -Include *.txt,*.ini,*.xml,*.config,*.ps1,*.bat
 Get-ChildItem 'C:\Windows\Panther','C:\Windows\System32\Sysprep' `
     -Include *unattend*.xml,*sysprep*.xml -File -Recurse -ErrorAction SilentlyContinue
 ```
-
-Treat a found value as a candidate until it authenticates to a specific account and service. Continue with [Windows credential checks](credentials.md).
+- A found value is a candidate until it authenticates → [credentials](credentials.md).
 
 ## PowerUp: enumeration only
-
-Use a trusted local copy and inspect its version. Dot-source it, then run only audit and discovery functions.
-
 ```powershell
 . .\PowerUp.ps1
 Invoke-PrivescAudit
-# Alias for the same audit in the PowerSploit version:
+# alias in the PowerSploit version:
 Invoke-AllChecks
 
 Get-ProcessTokenPrivilege -Special
@@ -150,57 +125,42 @@ Get-ApplicationHost
 Get-SiteListPassword
 Get-CachedGPPPassword
 ```
-
-`Invoke-AllChecks` reports findings and may print the name of a suggested abuse function; it does not execute that function. Do not run PowerUp's modifying functions from this enumeration sheet. Verify each result with `sc.exe`, `icacls`, `Get-Acl`, registry queries, and task details.
+- Audit prints the suggested abuse function name but does not run it.
+- Verify each hit with `sc.exe`, `icacls`, `Get-Acl`, `reg query`, task details.
 
 ## Wider automated sweep
-
-Automated output is a lead list, not proof. Use current copies, save the output, and manually confirm the exact right and trigger.
-
 ```powershell
 .\winPEASany.exe
 . .\PrivescCheck.ps1; Invoke-PrivescCheck
 .\Seatbelt.exe -group=all
 ```
-
-Map the exact Windows build only after the misconfiguration checks. Kernel or local CVE matching is a later step because patch detection and exploit applicability can be wrong. `wesng.py` can sort leads from saved `systeminfo` output; confirm the exact patch level yourself.
+- Output is a lead list: confirm the exact right and trigger by hand.
+- Kernel/CVE matching last: patch detection is often wrong.
+```bash
+python3 wes.py systeminfo.txt
+```
+- `wes.py` (wesng): `wes.py --update` first; feed it saved `systeminfo` output.
 
 ## Tool troubleshooting
-
-If a transferred tool fails, compare its checksum with the source copy, then check its runtime, architecture, and local protection status.
-
 ```powershell
-Get-FileHash '<TRANSFERRED-FILE>' -Algorithm SHA256
+Get-FileHash '<FILE>' -Algorithm SHA256
 [System.Environment]::Version
 Get-MpComputerStatus
 ```
+- Compare the checksum with the Kali copy, then check .NET runtime, architecture, Defender.
 
-## Triage the findings
-
-| Signal | Confirm next | Deeper notes |
+## Triage
+| Signal | Confirm | Notes |
 | --- | --- | --- |
-| Interesting token privilege | Present in this token; selected method can enable/use it and required resource exists | [Token rights](token-groups.md) · [Potato checks](potato.md) |
-| Writable service executable | Service account, exact ACL, and restart trigger | [Service binary hijacking](service-binary-hijacking.md) |
-| Modifiable service configuration | Exact service right and start/stop ability | [Service permissions](service-permissions.md) |
-| Unquoted service path | Candidate prefix exists and is writable | [Unquoted paths](unquoted-service-paths.md) |
-| Writable task, autorun, or DLL path | Exact ACL, privileged consumer, and reproducible trigger | [Tasks and autoruns](scheduled-tasks-and-autoruns.md) · [DLL checks](dll-hijacking.md) |
-| Saved credential or config secret | Account scope and accepted logon method | [Credential checks](credentials.md) |
-| Local-only service | Owning process, version, authentication, and forwarding route | [Pivoting](../06-pivoting.md) |
-
-## References
-
-- [OffSec: Understanding Penetration Testing Tools](https://www.offsec.com/blog/understanding-penetration-testing-tools/)
-- [FuzzySecurity: Windows Privilege Escalation Fundamentals](https://fuzzysecurity.com/tutorials/16.html)
-- [0xNeel: OSCP privilege-escalation enumeration checklist](https://0xneel.medium.com/privilege-escalation-enumeration-checklist-2d995e9ddfe7)
-- [FalconSpy: OSCP methodology](https://falconspy.medium.com/oscp-developing-a-methodology-32f4ab471fd6)
-- [PowerSploit PowerUp reference](https://powersploit.readthedocs.io/en/stable/Privesc/README/)
-- [PowerUp source](https://github.com/PowerShellMafia/PowerSploit/blob/master/Privesc/PowerUp.ps1)
-- [PEASS-ng winPEAS](https://github.com/peass-ng/PEASS-ng/tree/master/winPEAS)
+| Interesting token privilege | Enabled in this token; resource exists | [token-groups](token-groups.md) · [potato](potato.md) |
+| Writable service executable | Service account, ACL, restart trigger | [service-binary-hijacking](service-binary-hijacking.md) |
+| Modifiable service config | Service right + start/stop ability | [service-permissions](service-permissions.md) |
+| Unquoted service path | Prefix exists and is writable | [unquoted-service-paths](unquoted-service-paths.md) |
+| Writable task/autorun/DLL path | ACL, privileged consumer, trigger | [scheduled-tasks-and-autoruns](scheduled-tasks-and-autoruns.md) · [dll-hijacking](dll-hijacking.md) |
+| Saved credential/config secret | Account scope, accepted logon | [credentials](credentials.md) |
+| Local-only service | Process, version, auth, forward | [pivoting](../06-pivoting.md) |
 
 ## Where is the flag?
-
-Check the user desktops first. If the expected flag is missing, search `C:\`; a full recursive search can take time and will return only paths visible to the current token.
-
 ```powershell
 Get-ChildItem 'C:\Users\*\Desktop\local.txt','C:\Users\*\Desktop\proof.txt' `
     -Force -ErrorAction SilentlyContinue | Select-Object FullName
@@ -208,11 +168,9 @@ Get-ChildItem 'C:\Users\*\Desktop\local.txt','C:\Users\*\Desktop\proof.txt' `
 Get-ChildItem -Path C:\ -Include local.txt,proof.txt -File -Recurse -Force `
     -ErrorAction SilentlyContinue | Select-Object FullName
 ```
-
 ```cmd
 where /r C:\ local.txt 2>nul
 where /r C:\ proof.txt 2>nul
 type "<FLAG-PATH>"
 ```
-
-`local.txt` normally belongs to the user-level context; `proof.txt` normally requires the elevated context. Record the hostname and full path with the value.
+- `local.txt` = user context, `proof.txt` = elevated. Screenshot with hostname + full path.

@@ -1,12 +1,11 @@
 # Unquoted service paths
 
-[← Windows services](services.md)
+Needs: unquoted path with spaces + writable `<prefix>.exe` + privileged service + trigger.
 
-Need unquoted path + writable tested `<prefix>.exe` + privileged service + trigger.
-
-`C:\Program Files\Acme Tools\agent.exe` candidates: `C:\Program.exe`, `C:\Program Files\Acme.exe`. Check each parent ACL.
-
-`C:\Apps\Team Tools\Service Agent\svc.exe` candidate: `C:\Apps\Team Tools\Service.exe`. Check exact path.
+| `PathName` | Candidates |
+| --- | --- |
+| `C:\Program Files\Acme Tools\agent.exe` | `C:\Program.exe`, `C:\Program Files\Acme.exe` |
+| `C:\Apps\Team Tools\Service Agent\svc.exe` | `C:\Apps\Team.exe`, `C:\Apps\Team Tools\Service.exe` |
 
 ```powershell
 Get-CimInstance -ClassName Win32_Service |
@@ -18,16 +17,13 @@ icacls 'C:\'
 icacls 'C:\Program Files'
 Test-Path 'C:\Apps\Team Tools\Service.exe'
 icacls 'C:\Apps\Team Tools'
-sc.exe query <service-name>
+sc.exe query <SERVICE>
 ```
-
-Check `PathName` and arguments manually; avoid overwriting existing prefixes. Test exact path, then remove your file.
+- Read `PathName` and arguments by hand; do not overwrite an existing prefix file.
+- Test the exact path, then remove your file.
 
 PowerUp discovery:
-
 ```powershell
 . .\PowerUp.ps1
 Get-UnquotedService
 ```
-
-[Microsoft `CreateProcess` path parsing](https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-createprocessa)

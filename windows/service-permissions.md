@@ -1,36 +1,30 @@
 # Service permissions
 
-[← Windows services](services.md)
-
-Need `SERVICE_CHANGE_CONFIG` on service object + usable start trigger. `SERVICE_START` and `SERVICE_STOP` are separate rights.
+Needs `SERVICE_CHANGE_CONFIG` on the service + a usable start trigger. `SERVICE_START` and `SERVICE_STOP` are separate rights.
 
 ```powershell
 whoami /groups
-sc.exe qc <service-name>
+sc.exe qc <SERVICE>
 accesschk.exe -accepteula -c -w -v "Authenticated Users" *
-accesschk.exe -c -v <your-user-or-group> <service-name>
+accesschk.exe -c -v <USER> <SERVICE>
 ```
-
-Check AccessChk against your token; save `sc.exe qc` output (`BINARY_PATH_NAME`, account, start mode) and `sc.exe query` state. Configuration permission does not grant start/stop permission.
-
-Change configuration only after confirming a usable trigger and a restoration path:
+- Check AccessChk output against your own token groups.
+- Save `sc.exe qc` output (`BINARY_PATH_NAME`, account, start mode) and `sc.exe query` state first.
 
 ```powershell
-sc.exe config <service-name> binPath= "C:\Path\To\replacement.exe"
-sc.exe query <service-name>
-# Only if running and SERVICE_STOP is confirmed; wait for STOPPED:
-sc.exe stop <service-name>
-# Only with SERVICE_START or another already-confirmed trigger:
-sc.exe start <service-name>
+sc.exe config <SERVICE> binPath= "C:\Path\To\replacement.exe"
+sc.exe query <SERVICE>
+# only if running and SERVICE_STOP is confirmed; wait for STOPPED:
+sc.exe stop <SERVICE>
+# only with SERVICE_START or another confirmed trigger:
+sc.exe start <SERVICE>
 ```
+- Keep the space after `binPath=`.
+- Command line with embedded quotes: native `sc.exe` quoting breaks in PowerShell → [CIM workflow](../ad/privileged-groups.md#server-operators-exact-service-rights-benign-execution-proof).
+- Non-service exe still runs its side effect, then the SCM reports a startup error.
 
-Keep the space after `binPath=`. Restore the exact original command line, including arguments. The native example below requires a command line without embedded quotes; for a quoted executable path or quoted arguments, use the structured, backed-up [CIM workflow](../ad/privileged-groups.md#server-operators-exact-service-rights-benign-execution-proof) after confirming its provider permissions and service prerequisites. PowerShell versions differ in how they pass embedded quotes to native programs.
-
+Restore the original command line:
 ```powershell
-sc.exe config <service-name> binPath= "<original binary path and arguments>"
-sc.exe qc <service-name>
+sc.exe config <SERVICE> binPath= "<ORIGINAL-PATH-AND-ARGS>"
+sc.exe qc <SERVICE>
 ```
-
-Check stored path after restore; adapt quoting to the exact original. Restore the original running/stopped state as well. A non-service executable can produce its side effect and then fail the SCM dispatcher contract; inspect benign proof output rather than equate every startup error with no execution. See the [identity-proof example](../ad/privileged-groups.md#server-operators-exact-service-rights-benign-execution-proof).
-
-[Microsoft service rights](https://learn.microsoft.com/en-us/windows/win32/services/service-security-and-access-rights) · [AccessChk syntax](https://learn.microsoft.com/en-us/sysinternals/downloads/accesschk) · [`sc.exe config` syntax](https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/sc-config)

