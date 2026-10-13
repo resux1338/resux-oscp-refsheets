@@ -147,7 +147,7 @@ Get-FileHash '<FILE>' -Algorithm SHA256
 [System.Environment]::Version
 Get-MpComputerStatus
 ```
-- Compare the checksum with the Kali copy, then check .NET runtime, architecture, Defender.
+- Compare the checksum with the Kali copy, then check .NET runtime, architecture, Defender → [execution and defenses](execution-and-defenses.md).
 
 ## Triage
 | Signal | Confirm | Notes |

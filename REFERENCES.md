@@ -51,11 +51,25 @@
 
 ## Foothold
 
+- [Tomcat Manager App HOW-TO (text interface)](https://tomcat.apache.org/tomcat-9.0-doc/manager-howto.html)
+- [ysoserial](https://github.com/frohoff/ysoserial)
+- [ysoserial.net](https://github.com/pwntester/ysoserial.net)
+- [phpggc](https://github.com/ambionics/phpggc)
+- [Gopherus](https://github.com/tarunkant/Gopherus)
+- [git-dumper](https://github.com/arthaud/git-dumper)
+- [ODAT (Oracle Database Attacking Tool)](https://github.com/quentinhardy/odat)
+- [Redis security (official)](https://redis.io/docs/latest/operate/oss_and_stack/management/security/)
+- [CVE-2022-0543 (Redis Lua sandbox escape, Debian/Ubuntu)](https://nvd.nist.gov/vuln/detail/CVE-2022-0543)
+- [CVE-2021-41773 / 42013 (Apache 2.4.49/50)](https://httpd.apache.org/security/vulnerabilities_24.html)
+
 - [Powercat](https://github.com/besimorhino/powercat)
 - [Swaks reference](https://www.jetmore.org/john/code/swaks/files/swaks-20240103.0/doc/ref.txt)
 - [WsgiDAV](https://github.com/mar10/wsgidav)
 - [ConPtyShell](https://github.com/antonioCoco/ConPtyShell)
 - [revshells.com](https://www.revshells.com/) (reverse shell generator)
+- [uploadserver](https://github.com/Densaugeo/uploadserver)
+- [pyftpdlib](https://github.com/giampaolo/pyftpdlib)
+- [socat PTY shells](https://www.kali.org/tools/socat/)
 
 ## Linux privilege escalation
 
@@ -89,6 +103,14 @@
 - [PR_SET_NO_NEW_PRIVS man page](https://man7.org/linux/man-pages/man2/PR_SET_NO_NEW_PRIVS.2const.html)
 - [linux-smart-enumeration](https://github.com/diego-treitos/linux-smart-enumeration)
 - [OffSec: Understanding Penetration Testing Tools](https://www.offsec.com/blog/understanding-penetration-testing-tools/)
+- [linux-exploit-suggester](https://github.com/The-Z-Labs/linux-exploit-suggester)
+- [Qualys: Baron Samedit (CVE-2021-3156)](https://blog.qualys.com/vulnerabilities-threat-research/2021/01/26/cve-2021-3156-heap-based-buffer-overflow-in-sudo-baron-samedit)
+- [Qualys: PwnKit (CVE-2021-4034)](https://blog.qualys.com/vulnerabilities-threat-research/2022/01/25/pwnkit-local-privilege-escalation-vulnerability-discovered-in-polkits-pkexec-cve-2021-4034)
+- [Dirty Pipe (CVE-2022-0847)](https://dirtypipe.cm4all.com/)
+- [Dirty COW (CVE-2016-5195)](https://dirtycow.ninja/)
+- [Qualys: Looney Tunables (CVE-2023-4911)](https://blog.qualys.com/vulnerabilities-threat-research/2023/10/03/cve-2023-4911-looney-tunables-local-privilege-escalation-in-the-glibcs-ld-so)
+- [sudo CVE-2023-22809 advisory](https://www.sudo.ws/security/advisories/sudoedit_any/)
+- [Wildcard injection (tar, rsync, chown)](https://book.hacktricks.wiki/en/linux-hardening/privilege-escalation/wildcards-spare-tricks.html)
 
 ## Windows privilege escalation
 
@@ -109,6 +131,17 @@
 - [mimikatz](https://github.com/gentilkiwi/mimikatz)
 - [ntlm_theft](https://github.com/Greenwolf/ntlm_theft)
 - [Responder](https://github.com/lgandx/Responder)
+- [SeBackupPrivilege cmdlets](https://github.com/giuliano108/SeBackupPrivilege)
+- [EoPLoadDriver](https://github.com/TarlogicSecurity/EoPLoadDriver)
+- [ExploitCapcom](https://github.com/tandasat/ExploitCapcom)
+- [psgetsys](https://github.com/decoder-it/psgetsys)
+- [Microsoft: User Account Control settings and registry keys](https://learn.microsoft.com/windows/security/application-security/application-control/user-account-control/settings-and-configuration)
+- [Microsoft: AppLocker overview](https://learn.microsoft.com/windows/security/application-security/application-control/app-control-for-business/applocker/applocker-overview)
+- [firefox_decrypt](https://github.com/unode/firefox_decrypt)
+- [Microsoft: AMSI overview and test sample](https://learn.microsoft.com/windows/win32/amsi/antimalware-scan-interface-portal)
+- [S3cur3Th1sSh1t: Amsi-Bypass-Powershell](https://github.com/S3cur3Th1sSh1t/Amsi-Bypass-Powershell)
+- [Invoke-Obfuscation](https://github.com/danielbohannon/Invoke-Obfuscation)
+- [SharpDPAPI / SharpChromium](https://github.com/GhostPack/SharpDPAPI)
 
 ## Passwords
 
@@ -126,6 +159,8 @@
 - [Chisel repository](https://github.com/jpillora/chisel)
 - [Go cross-compile environment variables](https://go.dev/doc/install/source#environment)
 - [Ligolo-ng quickstart](https://docs.ligolo.ng/Quickstart/)
+- [OpenSSH `ProxyJump` / `-J`](https://man.openbsd.org/ssh_config#ProxyJump)
+- [Ligolo-ng: pivoting through a second agent](https://docs.ligolo.ng/)
 - [ligolo-ng](https://github.com/nicocha30/ligolo-ng)
 
 ## Active Directory

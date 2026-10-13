@@ -35,40 +35,40 @@ enumerate → lead → prove preconditions → access → re-enumerate
 ## [01 · Recon](01-recon.md)
 
 - `scan` [Nmap TCP/UDP, vhosts](enum/network-scanning.md) · [Port → service map](enum/service-triage.md)
-- `services` [SMB / RPC](enum/smb.md) · [FTP](enum/ftp.md) · [NFS](enum/nfs.md) · [DNS / AXFR](enum/dns.md) · [SNMP](enum/snmp.md) · [SMTP / IMAP / POP3](enum/mail.md) · [SSH, Telnet, Finger, rsync, TFTP](enum/other-services.md)
-- `db` [MySQL / PostgreSQL / Redis](enum/databases-and-redis.md) · [MSSQL: impersonation, links, xp_cmdshell](enum/mssql.md)
+- `services` [SMB / RPC](enum/smb.md) · [FTP](enum/ftp.md) · [NFS](enum/nfs.md) · [DNS / AXFR](enum/dns.md) · [SNMP](enum/snmp.md) · [SMTP / IMAP / POP3](enum/mail.md) · [SSH, Telnet, Finger, rsync, TFTP](enum/other-services.md) · [LDAP, VNC, Oracle, Mongo, Elasticsearch, memcached, IPMI, AJP, Docker API](enum/exposed-services.md)
+- `db` [MySQL / PostgreSQL / Redis, incl. RCE paths](enum/databases-and-redis.md) · [MSSQL: impersonation, links, xp_cmdshell](enum/mssql.md)
 - `auth` [RDP / WinRM / SSH](enum/remote-access.md)
 
 ## [02 · Foothold](02-foothold.md)
 
-- `web` [Enumeration](web/web-enumeration.md) · [Fingerprinting](web/fingerprinting.md) · [Path normalization, known apps](web/application-paths.md)
-- `inject` [SQLi: in-band, blind, MSSQL](web/manual-sqli.md) · [NoSQL](web/nosql.md) · [SSTI](web/ssti.md) · [Command injection, upload, traversal](web/files-and-commands.md)
+- `web` [Enumeration](web/web-enumeration.md) · [Fingerprinting](web/fingerprinting.md) · [Path normalization, known apps](web/application-paths.md) · [Tomcat, Jenkins, WordPress, Joomla/Drupal, .git, WebDAV, Shellshock, CVE patterns](web/cms-and-apps.md)
+- `inject` [SQLi: login bypass, MySQL, MSSQL, PostgreSQL, Oracle, SQLite](web/manual-sqli.md) · [NoSQL](web/nosql.md) · [SSTI](web/ssti.md) · [Command injection (Linux/Windows), upload bypasses, traversal](web/files-and-commands.md)
 - `fetch` [LFI → RCE](web/lfi.md) · [RFI](web/rfi.md) · [SSRF](web/ssrf.md) · [XXE](web/xxe.md)
 - `authz` [IDOR, mass assignment, OAuth/SAML, JWT](web/authentication.md) · [GraphQL](web/graphql.md) · [ViewState deserialization](web/insecure-deserialization.md) · [XSS](web/xss.md)
 - `exploit` [Public PoCs: search, adapt, compile](foothold/public-exploits.md) · [Client-side: SMTP, VBA macro, WebDAV .lnk](foothold/client-side-phishing.md)
-- `post` [Reverse shells, TTY, ConPtyShell, msfvenom](foothold/shells.md) · [File transfer](foothold/file-transfer.md)
+- `post` [Reverse shells, bind shells, encoded PowerShell, TTY, ConPtyShell, msfvenom](foothold/shells.md) · [File transfer: both directions, no-curl, base64](foothold/file-transfer.md)
 
 ## [03 · Linux privesc](03-linux-privesc.md)
 
 - `enum` [First pass, linPEAS, pspy](linux/enumeration.md)
-- `sudo` [sudo -l, GTFOBins, module hijack](linux/sudo.md) · [SUID / SGID / capabilities](linux/suid-and-capabilities.md)
-- `root-run` [Cron, timers, services](linux/root-run.md) · [Symlink and archive writes](linux/file-write.md)
+- `sudo` [sudo -l, GTFOBins table, version bugs, LD_PRELOAD, module hijack](linux/sudo.md) · [SUID / SGID / capabilities](linux/suid-and-capabilities.md)
+- `root-run` [Cron, timers, services, wildcard injection, PATH](linux/root-run.md) · [Symlink and archive writes](linux/file-write.md)
 - `groups` [docker / lxd, NFS no_root_squash](linux/groups-and-nfs.md)
-- `misc` [rbash escapes](linux/restricted-shells.md) · [Kernel exploits](linux/kernel-checks.md)
+- `misc` [rbash escapes](linux/restricted-shells.md) · [Kernel and CVE patterns: PwnKit, Dirty Pipe/COW, Baron Samedit](linux/kernel-checks.md) · [SSH keys, agents, authorized_keys](linux/ssh-and-keys.md) · [Process secrets, writable hooks, doas, tmux](linux/misc-vectors.md)
 
 ## [04 · Windows privesc](04-windows-privesc.md)
 
 - `enum` [First pass, winPEAS, PowerUp](windows/enumeration.md)
-- `tokens` [Se* privileges, local groups](windows/token-groups.md) · [Potatoes: Sigma, God, PrintSpoofer, EFS, Juicy, Rogue](windows/potato.md)
+- `tokens` [Se* privileges incl. Restore, TakeOwnership, LoadDriver, ManageVolume, Debug](windows/token-groups.md) · [UAC](windows/uac.md) · [Blocked scripts: execution policy, AppLocker, Defender, AMSI](windows/execution-and-defenses.md) · [Potatoes: Sigma, God, PrintSpoofer, EFS, Juicy, Rogue](windows/potato.md)
 - `services` [AlwaysInstallElevated](windows/services.md) · [Binary hijack](windows/service-binary-hijacking.md) · [Weak service ACL / binPath](windows/service-permissions.md) · [Unquoted paths](windows/unquoted-service-paths.md) · [DLL hijack](windows/dll-hijacking.md)
 - `tasks` [Scheduled tasks, autoruns](windows/scheduled-tasks-and-autoruns.md)
-- `creds` [Hunting, runas, DPAPI](windows/credentials.md) · [SAM / LSA / LSASS, Mimikatz](windows/credential-access.md)
+- `creds` [Hunting, runas, DPAPI](windows/credentials.md) · [KeePass, browsers, WinSCP, VNC, Sticky Notes, WSL](windows/credential-stores.md) · [SAM / LSA / LSASS, Mimikatz](windows/credential-access.md)
 - `ntlm` [NT vs NetNTLMv2](windows/ntlm.md) · [Coercion files, ntlm_theft](windows/ntlm-capture.md)
 
 ## [05 · Active Directory](05-active-directory.md)
 
 - `enum` [Baseline](ad/active-directory-enum.md) · [PowerView](ad/powerview.md) · [LDAP, sessions](ad/ldap-and-sessions.md) · [BloodHound queries](ad/bloodhound.md)
-- `kerberos` [AS-REP / Kerberoast](ad/authentication.md) · [Tickets: PtT, Silver, Golden, ExtraSID](ad/tickets.md) · [Delegation: KCD, RBCD, unconstrained](ad/delegation.md) · [KRB error fixes](ad/kerberos-troubleshooting.md)
+- `kerberos` [AS-REP / Kerberoast](ad/authentication.md) · [Tickets: PtT, Silver, Golden, ExtraSID](ad/tickets.md) · [Delegation: KCD, RBCD, unconstrained](ad/delegation.md) · [KRB error fixes, clock sync, krb5.conf](ad/kerberos-troubleshooting.md)
 - `acl` [GenericAll/Write, WriteDACL/Owner, targeted roast](ad/object-rights.md) · [SPNs, ACLs, SYSVOL](ad/spn-acl-shares.md) · [GPO edges](ad/gpo-edges.md)
 - `groups` [DnsAdmins, Server/Backup/Account Operators](ad/privileged-groups.md)
 - `adcs` [ESC1, ESC4, ESC8, PKINIT](ad/adcs.md)
@@ -78,8 +78,8 @@ enumerate → lead → prove preconditions → access → re-enumerate
 
 ## [06 · Pivoting](06-pivoting.md)
 
-- `ssh` [-L / -R / -D, socat, sshuttle](pivoting/ssh-socat.md)
-- `tunnel` [Chisel SOCKS, Ligolo-ng](pivoting/chisel-ligolo.md)
+- `ssh` [-L / -R / -D, -J jump hosts, socat, sshuttle](pivoting/ssh-socat.md)
+- `tunnel` [Chisel SOCKS, Ligolo-ng, second hop](pivoting/chisel-ligolo.md)
 - `windows` [Port relays, proxychains checks](pivoting/windows-and-proxy.md)
 
 ## [07 · Passwords](07-password-attacks.md)

@@ -17,3 +17,5 @@ Compare each variant against the canonical path and a missing path.
 | Tomcat | `/manager/html`, accepted creds, WAR deploy allowed |
 | Jenkins | `/script` reachable → Groovy `println "id".execute().text` |
 | Exposed Git | `.git/` readable → source, creds |
+
+- Access to these apps → code execution: [cms-and-apps](cms-and-apps.md).

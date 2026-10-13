@@ -110,4 +110,6 @@ cat '<FLAG-PATH>'
 | Docker/LXD/socket | Group, socket ACL, rootful daemon | [groups-and-nfs](groups-and-nfs.md) |
 | NFS export | `no_root_squash`, write access | [NFS](groups-and-nfs.md#nfs) |
 | Saved credential | Account, service, reuse | [creds](#users-homes-credentials) |
-| Kernel/package candidate | Exact build, arch, patch state | [kernel-checks](kernel-checks.md) |
+| Kernel/package candidate | Exact build, arch, patch state | [kernel-checks](kernel-checks.md#known-cve-patterns) |
+| SSH key / agent / config | Readable key, agent socket, known hosts | [ssh-and-keys](ssh-and-keys.md) |
+| Leftover secrets / writable hooks | Process args, backups, MOTD, profile.d | [misc-vectors](misc-vectors.md) |

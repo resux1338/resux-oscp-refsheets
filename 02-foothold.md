@@ -20,7 +20,10 @@ Pick the row matching the input; compare against a normal request.
 | JWT | Decode; only server-accepted change counts | [JWT](web/authentication.md#jwt) |
 | Browser-rendered input | Find output context; does it execute? | [XSS](web/xss.md) |
 | Known app or path filter | Version, plugins, default access, normalization | [Application paths](web/application-paths.md) |
+| Tomcat, Jenkins, WordPress, Joomla/Drupal, `.git`, WebDAV, CGI | Admin login or readable config; exact version | [Apps → code execution](web/cms-and-apps.md) |
+| Database login (MySQL, PostgreSQL, Redis) | Role, file write, program execution | [DB → RCE](enum/databases-and-redis.md#from-database-access-to-code-execution) |
+| Uncommon open port (VNC, Oracle, Mongo, Elasticsearch, memcached, Docker API) | Auth required? Data readable? | [Less common services](enum/exposed-services.md) |
 | Public PoC | Exact version; read code first | [Public exploits](foothold/public-exploits.md) |
 | User opens delivered content | Delivery path, client action, callback | [Client-side attacks and phishing](foothold/client-side-phishing.md) |
 
-After code execution: `id`/`whoami` → [shell](foothold/shells.md) · [payload](foothold/shells.md#msfvenom-payloads) · [transfer](foothold/file-transfer.md).
+After code execution: `id`/`whoami` → [shell](foothold/shells.md) · [payload](foothold/shells.md#msfvenom-payloads) · [encoded PowerShell](foothold/shells.md#powershell--encodedcommand) · [bind shell](foothold/shells.md#bind-shell-outbound-traffic-blocked) · [transfer](foothold/file-transfer.md).

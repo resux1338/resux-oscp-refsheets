@@ -39,4 +39,4 @@ $Stored = Import-Clixml -LiteralPath '<FILE>.xml'
 $Stored.UserName
 ```
 - Works only as the same user on the same machine that exported it (DPAPI).
-- Browser/vault/credential files need the DPAPI masterkey/context → SharpDPAPI.
+- Browser/vault/credential files need the DPAPI masterkey/context → [credential stores](credential-stores.md) (KeePass, browsers, WinSCP, VNC, Sticky Notes, WSL).
