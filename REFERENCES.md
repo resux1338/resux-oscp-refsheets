@@ -171,6 +171,7 @@
 - [LDAPDomainDump](https://github.com/dirkjanm/ldapdomaindump)
 - [SpecterOps: SharpHound target selection and collection](https://specterops.io/blog/2018/03/05/sharphound-target-selection-and-api-usage/)
 - [Certipy ESC1 guide](https://github.com/ly4k/Certipy/wiki/06-%E2%80%90-Privilege-Escalation)
+- [ADCS ESC13 abuse technique (SpecterOps)](https://posts.specterops.io/adcs-esc13-abuse-technique-fda4272fbd53)
 - [Certipy template parser](https://github.com/ly4k/Certipy/blob/master/certipy/commands/parsers/template.py)
 - [Rubeus README](https://github.com/GhostPack/Rubeus)
 - [Impacket secretsdump.py](https://github.com/fortra/impacket/blob/master/examples/secretsdump.py)
