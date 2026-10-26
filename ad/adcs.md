@@ -53,6 +53,11 @@ impacket-secretsdump -k -no-pass -dc-ip <DC-IP> -target-ip <DC-IP> -just-dc-user
 ## ESC8
 Live relay to the enrollment endpoint → [ntlm-relay](ntlm-relay.md#ad-cs-relay-esc8). A captured NetNTLM file is not enough.
 
+## When certipy req fails
+| Error | Fix |
+| --- | --- |
+| `CERTSRV_E_KEY_LENGTH` | Template wants a bigger key: `-key-size <N>`, N = `Minimum RSA Key Length` from `find` |
+
 ## PKINIT and Schannel failures
 `KDC_ERR_PADATA_TYPE_NOSUPP` → DC PKINIT support / certificate config. Schannel / LDAP instead:
 ```bash
