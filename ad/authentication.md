@@ -37,6 +37,7 @@ hashcat -m 13100 hashes.kerberoast /usr/share/wordlists/rockyou.txt
 ```bash
 nxc smb <DC-IP> -u users.txt -p '<PW>' --continue-on-success
 ```
+- Protocol matrix, kerbrute, hydra, candidates: [online-logins.md](../passwords/online-logins.md).
 
 ## Tickets / replication
 - Silver ticket: service hash + domain SID + target SPN. Golden: `krbtgt` key → [tickets](tickets.md).
