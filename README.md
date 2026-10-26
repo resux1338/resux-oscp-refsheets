@@ -69,7 +69,7 @@ enumerate → lead → prove preconditions → access → re-enumerate
 
 - `enum` [Baseline](ad/active-directory-enum.md) · [PowerView](ad/powerview.md) · [LDAP, sessions](ad/ldap-and-sessions.md) · [BloodHound queries](ad/bloodhound.md)
 - `kerberos` [AS-REP / Kerberoast](ad/authentication.md) · [Tickets: PtT, Silver, Golden, ExtraSID](ad/tickets.md) · [Delegation: KCD, RBCD, unconstrained](ad/delegation.md) · [KRB error fixes, clock sync, krb5.conf](ad/kerberos-troubleshooting.md)
-- `acl` [GenericAll/Write, WriteDACL/Owner, targeted roast](ad/object-rights.md) · [SPNs, ACLs, SYSVOL](ad/spn-acl-shares.md) · [GPO edges](ad/gpo-edges.md)
+- `acl` [GenericAll/Write, WriteDACL/Owner, targeted roast](ad/object-rights.md) · [Shares and SYSVOL](ad/spn-acl-shares.md) · [GPO edges](ad/gpo-edges.md)
 - `groups` [DnsAdmins, Server/Backup/Account Operators](ad/privileged-groups.md)
 - `adcs` [ESC1, ESC4, ESC8, PKINIT](ad/adcs.md)
 - `secrets` [LAPS / gMSA](ad/managed-credentials.md) · [DCSync / NTDS.dit](ad/credential-access.md)
@@ -104,6 +104,7 @@ enumerate → lead → prove preconditions → access → re-enumerate
 <TARGET-DN> object DN   <DEVICE-ID>   <DMSA-NAME>   <GPO-DISPLAY-NAME>   <TASK>   <CCACHE-FILE>   <KEY-SHA256>
 <JWT>   <SECRET>   <TOKEN>   <KALI-DOMAIN> domain resolving to <KALI>   <PW1> / <PW2> spray candidates
 <EDB-ID>   <FILE>   <MODE> hashcat/hash mode   <MODULE>   <NAME>   <REPO-URL>   <REPO-DIR>   <SSH-PUBKEY>   <TOPIC> MQTT   <MESSAGE> MQTT
+<CA-NAME>   <TEMPLATE>   <AGENT-TEMPLATE>   <TARGET-TEMPLATE>   <AGENT> enrollment-agent cert   <LM>   <REQUEST-ID>   <UNIT> systemd
 ```
 
 > [!IMPORTANT]

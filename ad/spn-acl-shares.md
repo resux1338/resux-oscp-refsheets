@@ -1,28 +1,7 @@
-# SPNs, object rights, and shares
+# Shares and SYSVOL
 
-Record principal + right + target + inheritance.
+SPN enumeration moved to [powerview.md#spns-and-pre-auth](powerview.md#spns-and-pre-auth) (and Kerberoast itself: [authentication.md](authentication.md)); object-ACL discovery moved to [powerview.md#object-acls](powerview.md#object-acls), abuse to [object-rights.md](object-rights.md). This page is shares/SYSVOL only.
 
-## SPNs
-```powershell
-Get-NetUser -SPN | Select-Object samaccountname,serviceprincipalname
-nslookup.exe <FQDN>
-```
-```cmd
-setspn -L <SERVICE-ACCOUNT>
-```
-
-## Object ACLs
-```powershell
-Get-ObjectAcl -Identity <USER>
-Convert-SidToName <SID>
-Get-ObjectAcl -Identity '<GROUP>' |
-    Where-Object {$_.ActiveDirectoryRights -eq 'GenericAll'} |
-    Select-Object SecurityIdentifier,ActiveDirectoryRights
-```
-- Resolve SIDs. Look for `GenericAll`, `GenericWrite`, `WriteOwner`, `WriteDACL`, `AllExtendedRights`, `ForceChangePassword` on the exact target.
-- After `WriteOwner`/`WriteDACL`: save owner + ACL so you can restore them.
-
-## Shares and SYSVOL
 ```powershell
 Find-DomainShare
 Get-ChildItem \\<DC-FQDN>\sysvol\<DOMAIN.TLD>\Policies\

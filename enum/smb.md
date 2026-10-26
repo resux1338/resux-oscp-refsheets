@@ -16,7 +16,7 @@ smbclient //<IP>/<SHARE> -U '<DOMAIN>/<USER>'
 smbclient //<IP>/<SHARE> -U '<DOMAIN>/<USER>' -c 'ls; get notes.txt'
 ```
 - Inside: `pwd`, `ls`, `cd`, `get`, `put` (test write). Check `SYSVOL`.
-- AD shares/ACLs: [ad/spn-acl-shares.md](../ad/spn-acl-shares.md)
+- AD shares/SYSVOL: [ad/spn-acl-shares.md](../ad/spn-acl-shares.md). Object ACLs: [ad/object-rights.md](../ad/object-rights.md).
 
 ## RPC null session
 ```bash

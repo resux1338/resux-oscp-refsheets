@@ -8,8 +8,8 @@ Record domain, DC, credential; per path: account + right + target + service. Sta
 | --- | --- | --- |
 | First domain picture | List users, groups, shares, hosts, policy | [LDAP and sessions](ad/ldap-and-sessions.md) · [BloodHound](ad/bloodhound.md) |
 | Roastable account | No pre-auth or user SPN; check lockout | [Authentication](ad/authentication.md) |
-| Useful object right | Principal, ACL right, target | [Object rights](ad/object-rights.md) · [SPNs and ACLs](ad/spn-acl-shares.md) |
-| Share or SYSVOL lead | Readable creds; writable loaded content | [Shares and SPNs](ad/spn-acl-shares.md) |
+| Useful object right | Principal, ACL right, target | [Object rights](ad/object-rights.md) · [PowerView ACL checks](ad/powerview.md#object-acls) |
+| Share or SYSVOL lead | Readable creds; writable loaded content | [Shares and SYSVOL](ad/spn-acl-shares.md) |
 | MSSQL access | SQL vs Windows login, role, impersonation, links | [MSSQL](enum/mssql.md) |
 | Session or admin edge | Local admin where a session exists? | [Sessions](ad/ldap-and-sessions.md#hosts-and-sessions) · [Lateral movement](ad/lateral-movement.md) |
 | GPO edge | GPO right, linked scope, affected hosts | [GPOs](ad/gpo-edges.md) |
