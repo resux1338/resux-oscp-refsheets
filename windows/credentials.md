@@ -34,9 +34,12 @@ runas /savecred /user:<USER> C:\rev.exe
 - Alternate data streams: `dir /R`, `more < file:stream`, `type ... > file:hidden`.
 
 ## Existing CLIXML / DPAPI material
+Broad file search first — the dump is rarely named `*.xml` or anything predictable: [credential-stores "Find the files"](credential-stores.md#find-the-files).
 ```powershell
-$Stored = Import-Clixml -LiteralPath '<FILE>.xml'
+$Stored = Import-Clixml -LiteralPath '<FILE>'
 $Stored.UserName
+$Stored.GetNetworkCredential().Password
 ```
+- `.UserName` alone isn't the finding — `.GetNetworkCredential().Password` is the actual plaintext. Decrypts in place as the same user, no masterkey step needed.
 - Works only as the same user on the same machine that exported it (DPAPI).
 - Browser/vault/credential files need the DPAPI masterkey/context → [credential stores](credential-stores.md) (KeePass, browsers, WinSCP, VNC, Sticky Notes, WSL).

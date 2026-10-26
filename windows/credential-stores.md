@@ -12,6 +12,13 @@ dir /s /b C:\Users\*id_rsa* C:\Users\*.pem C:\Users\*.pfx 2>nul
 Get-ChildItem C:\Users -Recurse -Include *.kdbx,*.rdg,*.ppk,*.ovpn,*.pfx,*.kirbi,*.ccache -ErrorAction SilentlyContinue |
     Select-Object FullName
 ```
+Exported `PSCredential`/DPAPI dumps are often named anything (`networkAuth.cred`, `creds.txt`) — extension-based search misses them; grep file content instead:
+```powershell
+Get-ChildItem C:\Users -Recurse -ErrorAction SilentlyContinue |
+    Select-String -Pattern 'PSCredential' -List |
+    Select-Object Path
+```
+- `-List`: stop at the first match per file (don't need every line, just which files qualify). Narrow `C:\Users` → a specific profile if this is slow.
 
 ## KeePass
 ```bash

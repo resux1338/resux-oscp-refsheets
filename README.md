@@ -103,6 +103,7 @@ enumerate → lead → prove preconditions → access → re-enumerate
 <TARGETS> IP/CIDR/file   <COMPANY>   <SET>   <OCTET>   <SUBNET-PREFIX> first 3 octets   <DEVICE> block device   <OSID>   <PATH>   <IMPERSONATE>   <LOCAL-USER>   <AES256-KEY>   <PFX>   <CA-FQDN>   <DLL-PATH>   <CONSOLE-PORT>   <SOURCE-IP>   <AUTH-PASS>   <PRIV-PASS> SNMPv3 passphrases
 <TARGET-DN> object DN   <DEVICE-ID>   <DMSA-NAME>   <GPO-DISPLAY-NAME>   <TASK>   <CCACHE-FILE>   <KEY-SHA256>
 <JWT>   <SECRET>   <TOKEN>   <KALI-DOMAIN> domain resolving to <KALI>   <PW1> / <PW2> spray candidates
+<EDB-ID>   <FILE>   <MODE> hashcat/hash mode   <MODULE>   <NAME>   <REPO-URL>   <REPO-DIR>   <SSH-PUBKEY>   <TOPIC> MQTT   <MESSAGE> MQTT
 ```
 
 > [!IMPORTANT]

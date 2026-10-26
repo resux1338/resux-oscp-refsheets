@@ -27,6 +27,16 @@ Fingerprinting workflow: [web/fingerprinting.md](../web/fingerprinting.md)
 | 11211 | [memcached](exposed-services.md#memcached-11211) | `stats items`, keys |
 | 27017 | [MongoDB](exposed-services.md#mongodb-27017) | Unauthenticated `show dbs` |
 | 8080, 8443, 8000+ | [Web apps](../web/cms-and-apps.md) | Tomcat, Jenkins, CMS, exposed `.git` |
+| 3000, 5000, 8000 | [Web](../web/web-enumeration.md) | Node/Express, Flask, Django dev server — check for a debug console (Werkzeug) |
+| 8081 | [Web apps](../web/cms-and-apps.md) | Nexus, other admin consoles |
+| 9000 | [Web apps](../web/cms-and-apps.md) · [exposed-services](exposed-services.md) | Portainer UI, or raw PHP-FPM (FastCGI, not HTTP) |
+| 9090 | [Web apps](../web/cms-and-apps.md) | Cockpit |
+| 10000 | [Web apps](../web/cms-and-apps.md) | Webmin |
+| 3632 | [other-services](other-services.md#distccd-3632) | distccd — unauthenticated remote command exec |
+| 6667 | [other-services](other-services.md#irc-6667) | IRC |
+| 4505, 4506 | [other-services](other-services.md#salt-4505-4506) | SaltStack master |
+| 6000 | [other-services](other-services.md#x11-6000) | X11 — no auth = screen/keylog/exec |
+| 1883 | [other-services](other-services.md#mqtt-1883) | MQTT broker |
 
 ```powershell
 Test-NetConnection -ComputerName <IP> -Port 445
