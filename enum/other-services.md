@@ -24,7 +24,7 @@ finger @<IP>
 finger <USER>@<IP>
 ```
 - Empty finger output is inconclusive.
-- Telnet default creds worth trying first: `admin:admin`, `root:root`, `root:` (no password), `admin:password`, device-specific defaults from the banner (router/switch/IoT firmware) — check the vendor's default-password list before brute-forcing.
+- Telnet default creds worth trying first: `admin:admin`, `root:root`, `root:` (no password), `admin:password`, device-specific defaults from the banner (router/switch/IoT firmware). Check the vendor's default-password list before brute-forcing.
 
 ## rsync daemon: 873
 ```bash
@@ -54,10 +54,10 @@ tftp <IP>
 ```text
 put local-file.txt remote-file.txt
 ```
-- `curl` is read-only for TFTP; `put` needs the interactive `tftp` client. No auth — a writable TFTP root is often a PXE/network-boot config directory.
+- `curl` is read-only for TFTP; `put` needs the interactive `tftp` client. No auth. A writable TFTP root is often a PXE/network-boot config directory.
 
 ## distccd: 3632
-Unauthenticated RPC that runs an arbitrary compiler — point it at a compiler wrapper that runs a shell instead of compiling:
+Unauthenticated RPC that runs an arbitrary compiler. Point it at a compiler wrapper that runs a shell instead of compiling:
 ```bash
 nmap -p3632 -sV --script distcc-cve2004-2687 <IP>
 ```
@@ -71,7 +71,7 @@ nc -nv <IP> 6667
 NICK <NAME>
 USER <NAME> 0 * :<NAME>
 ```
-- Banner (`NOTICE`/`:server 001`) gives the daemon and version — check for known backdoored builds (e.g. UnrealIRCd 3.2.8.1) before anything else.
+- Banner (`NOTICE`/`:server 001`) gives the daemon and version. Check for known backdoored builds (e.g. UnrealIRCd 3.2.8.1) first.
 
 ## Salt: 4505, 4506
 SaltStack master (4505 = publish, 4506 = request/reply). Unauthenticated versions had CVE-2020-11651/11652 (auth bypass + directory traversal → RCE):
@@ -99,11 +99,11 @@ xdotool type --delay 50 'touch /tmp/pwned'
 xdotool key Return
 ```
 - `xdotool` has no `--display` option: it uses `DISPLAY`.
-- `xdotool type` into a reactivated window (e.g. an open terminal) injects keystrokes as whoever is logged into that session — activate the window first, `--window` targeting alone is unreliable (`XSendEvent` delivery).
+- `xdotool type` into an activated window (e.g. an open terminal) injects keystrokes as whoever is logged into that session. Activate the window first: `--window` targeting alone is unreliable (`XSendEvent` delivery).
 
 ## MQTT: 1883
 ```bash
 mosquitto_sub -h <IP> -t '#' -v
 mosquitto_pub -h <IP> -t '<TOPIC>' -m '<MESSAGE>'
 ```
-- `-t '#'` subscribes to every topic — IoT/SCADA creds, sensor data and control topics often appear in plaintext with no auth configured at all.
+- `-t '#'` subscribes to every topic. IoT/SCADA creds, sensor data and control topics often show up in plaintext with no auth configured.

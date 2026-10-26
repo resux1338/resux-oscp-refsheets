@@ -27,7 +27,7 @@ gobuster dns -d <DOMAIN.TLD> -w <wordlist> --resolver <IP>
 dnsrecon -d <DOMAIN.TLD> -n <IP> -t brt -D <wordlist>
 dnsenum --dnsserver <IP> -f <wordlist> <DOMAIN.TLD>
 ```
-- `gobuster dns --resolver`: custom resolver to query (point it at the target so internal-only names actually resolve). No short flag for this one.
+- `gobuster dns --resolver`: custom resolver to query (point it at the target so internal-only names resolve). No short flag for this one.
 - `dnsenum` (classic Perl): also tries zone transfer and Google scraping unless told not to; `--noreverse` skips the PTR sweep it does by default.
 
 ## Reverse sweep

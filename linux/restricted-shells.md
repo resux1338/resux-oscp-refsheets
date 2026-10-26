@@ -35,7 +35,7 @@ git help <any-subcommand>
 !/bin/bash
 ```
 - `!` is `less`'s own documented command (`man less`): runs the rest of the line through a shell. Works the same whatever program opened the pager.
-- A true sshd `ForceCommand` directive overrides this — you never reach the pager for your own command, only the forced one.
+- A real sshd `ForceCommand` overrides this: you never reach the pager for your own command, only the forced one.
 
 ## SSH: skip the restricted login shell's startup
 ```bash
@@ -46,11 +46,11 @@ ssh <USER>@<IP> 'bash -i'
 - Does **not** bypass a real sshd `ForceCommand` (always runs regardless of what you pass) or a login shell that blocks spawning other shells outright.
 
 ## rbash: the `/` filter is shallow
-rbash blocks typing a command name containing `/` or reassigning `PATH`/`SHELL` — but only checks the literal word you type, not a value reached through a variable:
+rbash blocks typing a command name containing `/` or reassigning `PATH`/`SHELL`, but it only checks the literal word you type, not a value reached through a variable:
 ```bash
 BASH_CMDS[a]=/bin/sh;a
 ```
-- Define the array entry, then just run `a` — `a` itself has no `/`, so the restriction never triggers on it; it gets the mapped target directly.
+- Define the array entry, then run `a`. `a` has no `/`, so the restriction never triggers; it runs the mapped target.
 - Old bash only: bash ≥ 4.4 refuses a `/` in `BASH_CMDS` assignments under rbash (`restricted` error). Check `echo $BASH_VERSION` first.
 
 ## vi/vim: explicit shell variable

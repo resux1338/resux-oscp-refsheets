@@ -102,7 +102,7 @@ Same in one nxc module:
 ```bash
 nxc smb <IP> -u <USER> -p '<PW>' -M backup_operator
 ```
-- Writes the hives to a share the group can reach (SYSVOL), reads them back over SMB, then cleans up — privilege abuse, loot and cleanup in one command. That auto-exploit pattern is **not exam-safe** (check the current exam guide's tool restrictions: [exam-checklist](../documentation/exam-checklist.md)). The manual `impacket-reg backup` + `LOCAL secretsdump` steps above are the step-by-step equivalent.
+- Writes the hives to a share the group can reach (SYSVOL), reads them back over SMB, then cleans up: privilege abuse, loot and cleanup in one command. That auto-exploit pattern is **not exam-safe** (check the current exam guide's tool restrictions: [exam-checklist](../documentation/exam-checklist.md)). The manual `impacket-reg backup` + `LOCAL secretsdump` steps above do the same step by step.
 
 ## Account Operators
 Works on non-protected accounts and groups only (`adminCount` can be stale: read the ACL). Look for a writable group that grants access somewhere.

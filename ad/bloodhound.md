@@ -80,4 +80,4 @@ RETURN c
 MATCH p=(u:User)-[:CanRDP|CanPSRemote]->(c:Computer)
 RETURN p
 ```
-- Kerberoastable-with-paths is the built-in "Shortest paths to Domain Admins from Kerberoastable users" above — same filter, plus the path.
+- Kerberoastable-with-paths = the built-in "Shortest paths to Domain Admins from Kerberoastable users" above (same filter, plus the path).

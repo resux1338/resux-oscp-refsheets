@@ -71,7 +71,7 @@ nxc smb <IP> -u '<USER>' -p '<PW>' --smb-sessions
 nxc smb <IP> -u '<USER>' -p '<PW>' --disks
 nxc smb <IP> -u '<USER>' -p '<PW>' --pass-pol
 ```
-- `--shares` output: a `READ` / `WRITE` column per share for the account used — `WRITE` is a drop point, not just a read target.
+- `--shares` output: a `READ` / `WRITE` column per share for the account used. `WRITE` = a drop point.
 - `--loggedon-users` usually needs admin on the target for the full list; non-admin often returns nothing.
 
 ## RID brute without nxc
@@ -93,7 +93,7 @@ enum4linux -a -u '<USER>' -p '<PW>' <IP>
 nmap -p445 --script smb-vuln-ms17-010 <IP>
 nxc smb <IP>
 ```
-- `nxc smb <IP>` prints the OS name and build in its default banner line — no extra flag needed. An old, unpatched build is the cue to run `smb-vuln-ms17-010`.
+- `nxc smb <IP>` prints the OS name and build in its default banner line, no extra flag needed. An old, unpatched build is the cue to run `smb-vuln-ms17-010`.
 
 ## Writable share → NetNTLM capture
 Drop a `.url`, `.scf`, or `.lnk` file; opening the file, or in some cases just browsing the folder, fires an outbound SMB auth to your listener.

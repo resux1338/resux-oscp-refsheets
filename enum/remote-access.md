@@ -15,7 +15,7 @@ xfreerdp3 /v:<IP> /u:<USER> /pth:<NT> /cert:ignore +clipboard
 xfreerdp3 /v:<IP> /u:<USER> /p:'<PW>' /drive:share,/tmp /cert:ignore
 ```
 - `/pth:<NT>` needs Restricted Admin mode enabled on the target (`reg add "HKLM\System\CurrentControlSet\Control\Lsa" /v DisableRestrictedAdmin /t REG_DWORD /d 0 /f`); full chain: [lateral-movement](../ad/lateral-movement.md#rdp-with-a-hash).
-- `/drive:<name>,<local-path>`: mounts `<local-path>` inside the session as a drive named `<name>` — two-way file transfer without a separate upload step.
+- `/drive:<name>,<local-path>`: mounts `<local-path>` inside the session as a drive named `<name>`. Two-way file transfer without a separate upload step.
 - Black screen → VPN route/MTU.
 
 ### Enable RDP (already admin, no GUI)
@@ -24,7 +24,7 @@ reg add "HKLM\SYSTEM\CurrentControlSet\Control\Terminal Server" /v fDenyTSConnec
 netsh advfirewall firewall set rule group="remote desktop" new enable=Yes
 net localgroup "Remote Desktop Users" <USER> /add
 ```
-- `fDenyTSConnections=0` enables RDP but doesn't open the firewall by itself — both commands are needed.
+- `fDenyTSConnections=0` enables RDP but doesn't open the firewall. Both commands are needed.
 - Non-admin group members (`Remote Desktop Users`) still need RDP enabled by an admin first; the group alone doesn't do that.
 
 ## WinRM
@@ -45,4 +45,4 @@ Old box, modern Kali OpenSSH refuses the handshake:
 ssh <USER>@<IP> -oKexAlgorithms=+diffie-hellman-group1-sha1 -oHostKeyAlgorithms=+ssh-rsa
 ssh <USER>@<IP> -oKexAlgorithms=+diffie-hellman-group1-sha1 -oHostKeyAlgorithms=+ssh-rsa -oCiphers=+aes128-cbc
 ```
-- `+` appends to the default list instead of replacing it. `no matching key exchange method found` names the missing algorithm — add exactly that one.
+- `+` appends to the default list instead of replacing it. `no matching key exchange method found` names the missing algorithm: add exactly that one.

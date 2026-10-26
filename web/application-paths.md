@@ -21,7 +21,7 @@ Same idea as above, aimed at one blocked path instead of a filter. Try one at a 
 | Case change | `/Admin`, `/ADMIN` |
 | Header override | `X-Original-URL: /admin`, `X-Rewrite-URL: /admin` (same headers as the row above, aimed at one path instead of a filter) |
 
-- These bypass a block applied by a *front* component (proxy, WAF) while the *backend* still serves the path — confirm the response is the real admin content, not another 403/404 page styled differently.
+- These bypass a block applied by a *front* component (proxy, WAF) while the *backend* still serves the path. Confirm the response is the real admin content, not another 403/404 page styled differently.
 
 ## Known application entry points
-Table moved to [cms-and-apps](cms-and-apps.md) — this page covers path tricks only; that one covers the apps themselves (Tomcat, Jenkins, WordPress, Joomla/Drupal, exposed Git, WebDAV, Shellshock, known CVE patterns).
+Table moved to [cms-and-apps](cms-and-apps.md). This page covers path tricks; that one covers the apps (Tomcat, Jenkins, WordPress, Joomla/Drupal, exposed Git, WebDAV, Shellshock, known CVE patterns).

@@ -54,7 +54,7 @@ hashcat -a 0 -m <MODE> hashes.txt wordlist.txt -j '$2$0$2$6$!'       # quick inl
 hashcat -m <MODE> --username hashes.txt wordlist.txt                  # hashes.txt is user:hash per line
 ```
 - `-a 3` mask charsets: `?l` lower, `?u` upper, `?d` digit, `?s` special, `?a` all. Order the mask to match the policy you're guessing against (`?u?l?l?l?d?d?d?d!` = Capital + 3 lower + 4 digits + `!`).
-- `-j`/`--rule-left`: one literal rule inline, no rule file needed — faster than writing a one-line `.rule` file for a single quick guess (year + `!`, etc.).
+- `-j`/`--rule-left`: one literal rule inline, no rule file. Quicker than writing a one-line `.rule` file for a single guess (year + `!`, etc.).
 - `--username`: strips the username column before hashing; without it, hashcat tries to crack `user:hash` as one string and fails.
 
 ## john

