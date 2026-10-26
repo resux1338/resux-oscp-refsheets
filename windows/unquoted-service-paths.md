@@ -21,6 +21,7 @@ sc.exe query <SERVICE>
 ```
 - Read `PathName` and arguments by hand; do not overwrite an existing prefix file.
 - Test the exact path, then remove your file.
+- icacls legend, local-admin payload to plant at the candidate path: [service-binary-hijacking.md](service-binary-hijacking.md#icacls-rights-legend).
 
 PowerUp discovery:
 ```powershell
