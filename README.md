@@ -101,6 +101,7 @@ enumerate → lead → prove preconditions → access → re-enumerate
 <DOMAIN> NetBIOS   <DOMAIN.TLD>   <DC-IP>   <DC-FQDN>   <FQDN> non-DC host
 <USER>   <PW>   <NT>   <HOSTNAME>   <COMPUTER>   <TARGET>   <SERVICE>   <SVC>   <GMSA>   <GROUP>   <SHARE>
 <TARGETS> IP/CIDR/file   <COMPANY>   <SET>   <OCTET>   <SUBNET-PREFIX> first 3 octets   <DEVICE> block device   <OSID>   <PATH>   <IMPERSONATE>   <LOCAL-USER>   <AES256-KEY>   <PFX>   <CA-FQDN>   <DLL-PATH>   <CONSOLE-PORT>   <SOURCE-IP>   <AUTH-PASS>   <PRIV-PASS> SNMPv3 passphrases
+<TARGET-DN> object DN   <DEVICE-ID>   <DMSA-NAME>   <GPO-DISPLAY-NAME>   <TASK>   <CCACHE-FILE>   <KEY-SHA256>
 ```
 
 > [!IMPORTANT]

