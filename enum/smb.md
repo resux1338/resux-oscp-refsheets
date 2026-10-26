@@ -58,9 +58,10 @@ impacket-smbclient -hashes ':<NT>' '<DOMAIN>/<USER>@<IP>'
 - `--pw-nt-hash`: the value after `%` is read as the NT hash, not a password.
 ```bash
 export KRB5CCNAME=<PATH>.ccache
-nxc smb <IP> -k --use-kcache --shares
-impacket-smbclient -k -no-pass '<DOMAIN>/<USER>@<IP>'
+nxc smb <FQDN> -k --use-kcache --shares
+impacket-smbclient -k -no-pass '<DOMAIN.TLD>/<USER>@<FQDN>'
 ```
+- Kerberos: target by FQDN (resolvable, e.g. `/etc/hosts`), not IP; clock in sync → [kerberos-troubleshooting](../ad/kerberos-troubleshooting.md).
 
 ## More nxc enumeration flags
 ```bash

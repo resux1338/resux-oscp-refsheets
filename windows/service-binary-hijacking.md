@@ -23,7 +23,7 @@ sc.exe query <SERVICE>
 | no entry for the account | No access via this ACE; check other groups |
 
 ## Local-admin payload
-Reusable replacement for a hijacked service binary, planted DLL payload, or AlwaysInstallElevated MSI target.
+Reusable replacement for a hijacked service binary or an unquoted-path plant. DLL version: [dll-hijacking](dll-hijacking.md#custom-dll-survives-the-host-process); MSI: [installer policy](services.md#installer-policy).
 ```c
 #include <stdlib.h>
 int main() {

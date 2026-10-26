@@ -25,9 +25,10 @@ snmpwalk -v2c -c public <IP> 1.3.6.1.2.1.6.13.1.3      # TCP ports
 ```bash
 snmpbulkwalk -v2c -c public <IP> 1.3.6.1.2.1.1
 snmp-check -c public <IP>
+snmp-check -v 2c -c public <IP>
 ```
 - `snmpbulkwalk` batches GETBULK requests instead of one GETNEXT per OID — faster over high-latency links than `snmpwalk`.
-- `snmp-check` formats system/network/storage/process/user info into one report; no `-v2c` flag needed, it's the default.
+- `snmp-check` formats system/network/storage/process/user info into one report. Default is SNMP v1: add `-v 2c` when the agent only answers v2c.
 - MIB names not resolving → `sudo apt install snmp-mibs-downloader` (pulls the IANA/IETF MIB files `snmpwalk`/`snmpget` use to turn numeric OIDs into names like `NET-SNMP-EXTEND-MIB::nsExtendObjects`).
 
 ## Community string brute force

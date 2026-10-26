@@ -33,11 +33,11 @@ nxc winrm <IP> -u <USER> -p '<PW>'
 evil-winrm -i <IP> -u <USER> -p '<PW>'
 evil-winrm -i <IP> -u <USER> -H <NT>
 evil-winrm -i <IP> -u <USER> -p '<PW>' -s /path/to/ps-scripts/ -e /path/to/exes/
-evil-winrm -i <IP> -r <DOMAIN.TLD>
+evil-winrm -i <FQDN> -r <DOMAIN.TLD>
 ```
 - NT hash works (NTLM). NetNTLMv2 is crack-only: [cracking](../passwords/cracking.md#identify-the-hash).
 - `-s`/`-e`: local directories of PowerShell scripts / C# executables, loaded into the session. Inside the shell: `upload <local> <remote>`, `download <remote> <local>`, `menu` (lists what `-s`/`-e` made available), `Bypass-4MSI` (AMSI bypass before running something that would otherwise be flagged).
-- `-r`: Kerberos auth — needs the realm set in `/etc/krb5.conf` too (`CONTOSO.COM = { kdc = fooserver.contoso.com }`) and `-i` as the target's FQDN, not a bare IP.
+- `-r`: Kerberos auth with the ticket in `KRB5CCNAME`; needs the realm in `/etc/krb5.conf` (`<DOMAIN.TLD> = { kdc = <DC-FQDN> }`, full file: [krb5.conf](../ad/kerberos-troubleshooting.md#minimal-krb5conf-for-kinit-evil-winrm--r-ssh-with-gssapi)) and `-i` as the target's FQDN, not a bare IP.
 
 ## SSH: legacy algorithms
 Old box, modern Kali OpenSSH refuses the handshake:

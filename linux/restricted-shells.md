@@ -51,6 +51,7 @@ rbash blocks typing a command name containing `/` or reassigning `PATH`/`SHELL` 
 BASH_CMDS[a]=/bin/sh;a
 ```
 - Define the array entry, then just run `a` — `a` itself has no `/`, so the restriction never triggers on it; it gets the mapped target directly.
+- Old bash only: bash ≥ 4.4 refuses a `/` in `BASH_CMDS` assignments under rbash (`restricted` error). Check `echo $BASH_VERSION` first.
 
 ## vi/vim: explicit shell variable
 If the default `$SHELL` is itself restricted, point vi at a real one before escaping:

